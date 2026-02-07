@@ -96,6 +96,20 @@ export const CheckIcon = ({ className = "w-8 h-8" }: { className?: string }) => 
   </svg>
 );
 
+export const TrashIcon = ({ className = "w-8 h-8" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 32 32" fill="currentColor">
+    {/* Lid */}
+    <rect x="6" y="6" width="20" height="4" />
+    <rect x="12" y="4" width="8" height="2" />
+    {/* Body */}
+    <rect x="8" y="10" width="16" height="18" />
+    {/* Lines */}
+    <rect x="11" y="14" width="2" height="10" fill="hsl(var(--background))" />
+    <rect x="15" y="14" width="2" height="10" fill="hsl(var(--background))" />
+    <rect x="19" y="14" width="2" height="10" fill="hsl(var(--background))" />
+  </svg>
+);
+
 export const getIconByType = (type: string) => {
   switch (type) {
     case 'gamepad':
