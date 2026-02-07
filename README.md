@@ -8,11 +8,11 @@ Esta aplicación nace de la necesidad de tener un control total sobre nuestro ti
 
 ## 🚀 Características Principales
 
-* [cite_start]**Latencia Cero**: Al residir los datos primero en el navegador del usuario (IndexedDB), la interacción es instantánea[cite: 18].
-* [cite_start]**Offline-First**: Funcionamiento total sin internet gracias a su arquitectura y soporte PWA[cite: 18, 55].
-* [cite_start]**Sincronización Automática**: Jazz se encarga de mover los datos entre dispositivos y la nube de forma transparente[cite: 19].
-* [cite_start]**Estética Retro**: Interfaz minimalista inspirada en los 8 bits, construida con Tailwind CSS y componentes accesibles[cite: 16].
-* [cite_start]**Instalable**: Configurada como PWA para funcionar como una app nativa en tu móvil[cite: 21, 54].
+* **Latencia Cero**: Al residir los datos primero en el navegador del usuario (IndexedDB), la interacción es instantánea.
+* **Offline-First**: Funcionamiento total sin internet gracias a su arquitectura y soporte PWA.
+* **Sincronización Automática**: Jazz se encarga de mover los datos entre dispositivos y la nube de forma transparente.
+* **Estética Retro**: Interfaz minimalista inspirada en los 8 bits, construida con Tailwind CSS y componentes accesibles.
+* **Instalable**: Configurada como PWA para funcionar como una app nativa en tu móvil.
 
 ---
 
@@ -20,12 +20,12 @@ Esta aplicación nace de la necesidad de tener un control total sobre nuestro ti
 
 | Capa | Tecnología | Función Clave |
 | :--- | :--- | :--- |
-| **Framework** | **SolidStart** | [cite_start]Reactividad y rutas full-stack ultrarrápidas[cite: 13, 65]. |
-| **Persistencia** | **Jazz** | [cite_start]Local-first y sincronización mágica[cite: 17, 65]. |
-| **Cerebro IA** | **Claude Opus 4.5** | [cite_start]Ejecución de tareas complejas con alta precisión[cite: 22, 65]. |
-| **Terminal** | **OpenCode** | [cite_start]Interacción de la IA con el sistema de archivos[cite: 25, 65]. |
-| **Calidad** | **Vitest / Playwright** | [cite_start]Guardarraíles para asegurar un código sin errores[cite: 33, 65]. |
-| **Despliegue** | **Vercel** | [cite_start]Hosting optimizado para arquitecturas modernas[cite: 44, 52]. |
+| **Framework** | **SolidStart** | Reactividad y rutas full-stack ultrarrápidas. |
+| **Persistencia** | **Jazz** | Local-first y sincronización mágica. |
+| **Cerebro IA** | **Claude Opus 4.5** | Ejecución de tareas complejas con alta precisión. |
+| **Terminal** | **OpenCode** | Interacción de la IA con el sistema de archivos. |
+| **Calidad** | **Vitest / Playwright** | Guardarraíles para asegurar un código sin errores. |
+| **Despliegue** | **Vercel** | Hosting optimizado para arquitecturas modernas. |
 
 ---
 
@@ -33,10 +33,10 @@ Esta aplicación nace de la necesidad de tener un control total sobre nuestro ti
 
 Este proyecto utiliza un **Agentic Workflow** para garantizar que el código siga siempre los principios de **Clean Code**:
 
-1. [cite_start]**Definición de Tareas**: Las instrucciones se depositan en archivos Markdown dentro de la carpeta `tasks/`[cite: 26].
-2. [cite_start]**Manual de Identidad**: El archivo `AGENTS.md` y las `SKILLS` definen el comportamiento y conocimientos específicos de la IA[cite: 35, 37].
-3. [cite_start]**Ejecución Automática**: A través de **OpenCode**, la IA lee las tareas, planifica la solución, escribe el código y realiza los tests[cite: 25, 30].
-4. [cite_start]**Calidad Garantizada**: Si los tests unitarios o E2E no pasan, el sistema no permite realizar el commit[cite: 34].
+1. **Definición de Tareas**: Las instrucciones se depositan en archivos Markdown dentro de la carpeta `tasks/`.
+2. **Manual de Identidad**: El archivo `AGENTS.md` y las `SKILLS` definen el comportamiento y conocimientos específicos de la IA.
+3. **Ejecución Automática**: A través de **OpenCode**, la IA lee las tareas, planifica la solución, escribe el código y realiza los tests.
+4. **Calidad Garantizada**: Si los tests unitarios o E2E no pasan, el sistema no permite realizar el commit.
 
 ---
 
