@@ -22,7 +22,6 @@ const App = () => (
   <JazzReactProvider
     sync={JAZZ_SYNC}
     AccountSchema={BacklogPixelAccount}
-    guestMode
   >
     <TooltipProvider>
       <Toaster />
