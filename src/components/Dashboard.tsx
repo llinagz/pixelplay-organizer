@@ -4,7 +4,7 @@ import { PixelButton } from '@/components/PixelButton';
 import { PixelInput } from '@/components/PixelInput';
 import { PixelCard } from '@/components/PixelCard';
 import { useApp } from '@/context/AppContext';
-import { getIconByType, PlusIcon, StarIcon } from '@/components/PixelIcons';
+import { getIconByType, PlusIcon, TrashIcon } from '@/components/PixelIcons';
 import { BacklogItem, ItemStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/backlog';
 
 const AddItemModal = ({
@@ -92,8 +92,17 @@ const AddItemModal = ({
   );
 };
 
-const ItemCard = ({ item, onUpdateStatus }: { item: BacklogItem; onUpdateStatus: (status: ItemStatus) => void }) => {
+const ItemCard = ({ 
+  item, 
+  onUpdateStatus,
+  onDelete 
+}: { 
+  item: BacklogItem; 
+  onUpdateStatus: (status: ItemStatus) => void;
+  onDelete: () => void;
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   return (
     <motion.div
@@ -143,7 +152,10 @@ const ItemCard = ({ item, onUpdateStatus }: { item: BacklogItem; onUpdateStatus:
               {(Object.keys(STATUS_LABELS) as ItemStatus[]).map((s) => (
                 <button
                   key={s}
-                  onClick={() => onUpdateStatus(s)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdateStatus(s);
+                  }}
                   className={`px-2 py-1 border-2 text-pixel-xs uppercase transition-all ${
                     item.status === s
                       ? 'border-primary bg-primary/20'
@@ -155,6 +167,52 @@ const ItemCard = ({ item, onUpdateStatus }: { item: BacklogItem; onUpdateStatus:
                 </button>
               ))}
             </div>
+            
+            {/* Delete section */}
+            <div className="mt-4 pt-3 border-t-2 border-border">
+              {!showDeleteConfirm ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteConfirm(true);
+                  }}
+                  className="flex items-center gap-2 px-3 py-1 border-2 border-destructive text-destructive text-pixel-xs uppercase hover:bg-destructive/20 transition-all"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  Eliminar
+                </button>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex flex-col gap-2"
+                >
+                  <p className="text-pixel-sm text-destructive uppercase">
+                    ¿Eliminar este ítem?
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete();
+                      }}
+                      className="px-3 py-1 border-2 border-destructive bg-destructive text-destructive-foreground text-pixel-xs uppercase hover:brightness-110 transition-all"
+                    >
+                      Sí, eliminar
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowDeleteConfirm(false);
+                      }}
+                      className="px-3 py-1 border-2 border-border text-muted-foreground text-pixel-xs uppercase hover:border-primary/50 transition-all"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -163,7 +221,7 @@ const ItemCard = ({ item, onUpdateStatus }: { item: BacklogItem; onUpdateStatus:
 };
 
 export const Dashboard = () => {
-  const { state, updateItem, resetApp } = useApp();
+  const { state, updateItem, removeItem, resetApp } = useApp();
   const [activeTagId, setActiveTagId] = useState<string | null>(
     state.tags[0]?.id || null
   );
@@ -284,6 +342,7 @@ export const Dashboard = () => {
                           onUpdateStatus={(status) =>
                             updateItem(item.id, { status })
                           }
+                          onDelete={() => removeItem(item.id)}
                         />
                       ))}
                     </AnimatePresence>
