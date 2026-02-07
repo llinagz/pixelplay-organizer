@@ -4,8 +4,21 @@ import { PixelButton } from '@/components/PixelButton';
 import { PixelInput } from '@/components/PixelInput';
 import { PixelCard } from '@/components/PixelCard';
 import { useApp } from '@/context/AppContext';
-import { getIconByType, PlusIcon, TrashIcon } from '@/components/PixelIcons';
-import { BacklogItem, ItemStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/backlog';
+import { getIconByType, PlusIcon, TrashIcon, GamepadIcon, BookIcon, FilmIcon, MusicIcon, TvIcon } from '@/components/PixelIcons';
+import { BacklogItem, ItemStatus, STATUS_LABELS, STATUS_COLORS, Tag } from '@/types/backlog';
+
+const ICON_OPTIONS: { type: Tag['icon']; component: React.FC<{ className?: string }> }[] = [
+  { type: 'gamepad', component: GamepadIcon },
+  { type: 'book', component: BookIcon },
+  { type: 'film', component: FilmIcon },
+  { type: 'music', component: MusicIcon },
+  { type: 'tv', component: TvIcon },
+];
+
+const COLOR_OPTIONS = [
+  '#22c55e', '#3b82f6', '#a855f7', '#f59e0b', 
+  '#ef4444', '#ec4899', '#14b8a6', '#f97316',
+];
 
 const AddItemModal = ({
   isOpen,
@@ -80,6 +93,116 @@ const AddItemModal = ({
             <div className="flex gap-2">
               <PixelButton type="submit" disabled={!title.trim()}>
                 Añadir
+              </PixelButton>
+              <PixelButton type="button" variant="secondary" onClick={onClose}>
+                Cancelar
+              </PixelButton>
+            </div>
+          </form>
+        </PixelCard>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+const AddTagModal = ({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) => {
+  const { addTag } = useApp();
+  const [name, setName] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState<Tag['icon']>('gamepad');
+  const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim()) {
+      addTag({ name: name.trim(), icon: selectedIcon, color: selectedColor });
+      setName('');
+      setSelectedIcon('gamepad');
+      setSelectedColor(COLOR_OPTIONS[0]);
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <PixelCard variant="panel" className="w-full max-w-sm">
+          <h3 className="text-pixel-lg text-primary mb-4">Nueva Categoría</h3>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <PixelInput
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Nombre..."
+              autoFocus
+            />
+            
+            {/* Icon selector */}
+            <div>
+              <p className="text-pixel-sm text-muted-foreground mb-2 uppercase">
+                Icono
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {ICON_OPTIONS.map(({ type, component: Icon }) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setSelectedIcon(type)}
+                    className={`p-2 border-2 transition-all ${
+                      selectedIcon === type
+                        ? 'border-primary bg-primary/20'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    style={{ color: selectedColor }}
+                  >
+                    <Icon className="w-6 h-6" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Color selector */}
+            <div>
+              <p className="text-pixel-sm text-muted-foreground mb-2 uppercase">
+                Color
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {COLOR_OPTIONS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setSelectedColor(color)}
+                    className={`w-8 h-8 border-4 transition-all ${
+                      selectedColor === color
+                        ? 'border-primary scale-110'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <PixelButton type="submit" disabled={!name.trim()}>
+                Crear
               </PixelButton>
               <PixelButton type="button" variant="secondary" onClick={onClose}>
                 Cancelar
@@ -221,11 +344,12 @@ const ItemCard = ({
 };
 
 export const Dashboard = () => {
-  const { state, updateItem, removeItem, resetApp } = useApp();
+  const { state, updateItem, removeItem, addTag, resetApp } = useApp();
   const [activeTagId, setActiveTagId] = useState<string | null>(
     state.tags[0]?.id || null
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
 
   const filteredItems = state.items.filter((item) => item.tagId === activeTagId);
   const activeTag = state.tags.find((t) => t.id === activeTagId);
@@ -296,6 +420,20 @@ export const Dashboard = () => {
                   </motion.button>
                 );
               })}
+              
+              {/* Add new category button */}
+              <motion.button
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 + state.tags.length * 0.05 }}
+                onClick={() => setIsTagModalOpen(true)}
+                className="w-full p-3 border-2 border-dashed border-border flex items-center justify-center gap-2 transition-all hover:border-primary/50 hover:bg-muted/50"
+              >
+                <PlusIcon className="w-5 h-5 text-muted-foreground" />
+                <span className="text-pixel-sm text-muted-foreground">
+                  Nueva categoría
+                </span>
+              </motion.button>
             </nav>
           </div>
         </motion.aside>
@@ -389,6 +527,16 @@ export const Dashboard = () => {
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             tagId={activeTagId}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Add tag modal */}
+      <AnimatePresence>
+        {isTagModalOpen && (
+          <AddTagModal
+            isOpen={isTagModalOpen}
+            onClose={() => setIsTagModalOpen(false)}
           />
         )}
       </AnimatePresence>
