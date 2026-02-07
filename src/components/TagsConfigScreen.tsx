@@ -1,42 +1,50 @@
+/**
+ * Pantalla de configuración de etiquetas — Paso 2 del onboarding.
+ *
+ * Permite al usuario personalizar sus categorías de ocio
+ * antes de empezar a usar el dashboard.
+ */
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PixelButton } from '@/components/PixelButton';
 import { PixelInput } from '@/components/PixelInput';
 import { PixelCard } from '@/components/PixelCard';
-import { useApp } from '@/context/AppContext';
-import { GamepadIcon, BookIcon, FilmIcon, PlusIcon, getIconByType } from '@/components/PixelIcons';
+import { useApp, type TagIcon } from '@/context/AppContext';
+import { PlusIcon, getIconByType } from '@/components/PixelIcons';
 
+/** Colores predefinidos para las etiquetas */
 const PRESET_COLORS = [
-  '#22c55e', // green
-  '#3b82f6', // blue
-  '#a855f7', // purple
-  '#ef4444', // red
-  '#f59e0b', // amber
-  '#ec4899', // pink
-  '#06b6d4', // cyan
-  '#84cc16', // lime
+  '#22c55e', // verde
+  '#3b82f6', // azul
+  '#a855f7', // morado
+  '#ef4444', // rojo
+  '#f59e0b', // ámbar
+  '#ec4899', // rosa
+  '#06b6d4', // cian
+  '#84cc16', // lima
 ];
 
-const ICON_OPTIONS = [
+/** Opciones de icono disponibles */
+const ICON_OPTIONS: { id: TagIcon; label: string }[] = [
   { id: 'gamepad', label: 'Mando' },
   { id: 'book', label: 'Libro' },
   { id: 'film', label: 'Cine' },
   { id: 'music', label: 'Música' },
   { id: 'tv', label: 'Series' },
-] as const;
+];
 
 export const TagsConfigScreen = () => {
-  const { state, completeOnboarding, addTag, removeTag } = useApp();
+  const { nombreUsuario, tags, completeOnboarding, addTag, removeTag } = useApp();
   const [isAdding, setIsAdding] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);
-  const [selectedIcon, setSelectedIcon] = useState<typeof ICON_OPTIONS[number]['id']>('gamepad');
+  const [selectedIcon, setSelectedIcon] = useState<TagIcon>('gamepad');
 
   const handleAddTag = () => {
     if (newTagName.trim()) {
       addTag({
-        name: newTagName.trim(),
-        icon: selectedIcon,
+        nombre: newTagName.trim(),
+        icono: selectedIcon,
         color: selectedColor,
       });
       setNewTagName('');
@@ -44,7 +52,7 @@ export const TagsConfigScreen = () => {
     }
   };
 
-  const renderIcon = (iconId: string, color: string) => {
+  const renderIcon = (iconId: string) => {
     const IconComponent = getIconByType(iconId);
     return <IconComponent className="w-8 h-8" />;
   };
@@ -57,27 +65,27 @@ export const TagsConfigScreen = () => {
           animate={{ opacity: 1 }}
           className="space-y-6"
         >
-          {/* Header */}
+          {/* Cabecera */}
           <div className="text-center">
             <motion.h2
               className="text-pixel-xl text-primary pixel-glow mb-2"
               initial={{ y: -10 }}
               animate={{ y: 0 }}
             >
-              ¡Hola, {state.user?.name}!
+              ¡Hola, {nombreUsuario}!
             </motion.h2>
             <p className="text-pixel-base text-muted-foreground">
               Configura tus categorías de ocio
             </p>
           </div>
 
-          {/* Divider */}
+          {/* Separador */}
           <div className="h-1 w-full bg-border" />
 
-          {/* Tags list */}
+          {/* Lista de tags */}
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
-              {state.tags.map((tag, index) => (
+              {tags.map((tag, index) => (
                 <motion.div
                   key={tag.id}
                   initial={{ opacity: 0, x: -20 }}
@@ -88,9 +96,9 @@ export const TagsConfigScreen = () => {
                 >
                   <div className="flex items-center gap-3">
                     <div style={{ color: tag.color }}>
-                      {renderIcon(tag.icon, tag.color)}
+                      {renderIcon(tag.icono)}
                     </div>
-                    <span className="text-pixel-base text-foreground">{tag.name}</span>
+                    <span className="text-pixel-base text-foreground">{tag.nombre}</span>
                   </div>
                   <PixelButton
                     variant="ghost"
@@ -104,7 +112,7 @@ export const TagsConfigScreen = () => {
               ))}
             </AnimatePresence>
 
-            {/* Add new tag form */}
+            {/* Formulario para añadir tag */}
             <AnimatePresence>
               {isAdding ? (
                 <motion.div
@@ -121,7 +129,7 @@ export const TagsConfigScreen = () => {
                     autoFocus
                   />
 
-                  {/* Icon selector */}
+                  {/* Selector de icono */}
                   <div>
                     <p className="text-pixel-sm text-muted-foreground mb-2 uppercase">
                       Icono
@@ -138,13 +146,13 @@ export const TagsConfigScreen = () => {
                           }`}
                           style={{ color: selectedColor }}
                         >
-                          {renderIcon(icon.id, selectedColor)}
+                          {renderIcon(icon.id)}
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* Color selector */}
+                  {/* Selector de color */}
                   <div>
                     <p className="text-pixel-sm text-muted-foreground mb-2 uppercase">
                       Color
@@ -188,7 +196,7 @@ export const TagsConfigScreen = () => {
             </AnimatePresence>
           </div>
 
-          {/* Continue button */}
+          {/* Botón continuar */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -197,7 +205,7 @@ export const TagsConfigScreen = () => {
             <PixelButton
               onClick={completeOnboarding}
               className="w-full"
-              disabled={state.tags.length === 0}
+              disabled={tags.length === 0}
             >
               <span className="flex items-center justify-center gap-2">
                 Ir al Dashboard

@@ -5,30 +5,37 @@ import { Dashboard } from '@/components/Dashboard';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const AppContent = () => {
-  const { state } = useApp();
+  const { authState, onboardingCompletado } = useApp();
 
-  // Determine which screen to show
+  // Determinar qué pantalla mostrar según el estado del usuario
   const getScreen = () => {
-    if (!state.user) {
+    if (authState === "anonymous") {
       return <WelcomeScreen key="welcome" />;
     }
-    if (!state.user.onboardingCompleted) {
+    if (!onboardingCompletado) {
       return <TagsConfigScreen key="tags" />;
     }
     return <Dashboard key="dashboard" />;
   };
 
+  // Clave para la animación basada en el estado actual
+  const screenKey = authState === "anonymous"
+    ? "welcome"
+    : !onboardingCompletado
+      ? "tags"
+      : "dashboard";
+
   return (
     <div className="min-h-screen bg-background relative scanlines">
-      {/* Background decorations */}
+      {/* Decoraciones de fondo pixel-art */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {/* Corner pixels */}
+        {/* Píxeles en las esquinas */}
         <div className="absolute top-0 left-0 w-8 h-8 bg-primary/10" />
         <div className="absolute top-0 right-0 w-8 h-8 bg-primary/10" />
         <div className="absolute bottom-0 left-0 w-8 h-8 bg-primary/10" />
         <div className="absolute bottom-0 right-0 w-8 h-8 bg-primary/10" />
         
-        {/* Grid pattern */}
+        {/* Patrón de rejilla */}
         <div
           className="absolute inset-0 opacity-[0.02]"
           style={{
@@ -43,7 +50,7 @@ const AppContent = () => {
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={!state.user ? 'welcome' : !state.user.onboardingCompleted ? 'tags' : 'dashboard'}
+          key={screenKey}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}

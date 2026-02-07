@@ -1,3 +1,8 @@
+/**
+ * Pantalla de bienvenida — Paso 1 del onboarding.
+ *
+ * Pide el nombre del jugador y crea la cuenta con DemoAuth.
+ */
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { PixelButton } from '@/components/PixelButton';
@@ -7,18 +12,32 @@ import { useApp } from '@/context/AppContext';
 
 export const WelcomeScreen = () => {
   const [name, setName] = useState('');
-  const { setUserName } = useApp();
+  const [isLoading, setIsLoading] = useState(false);
+  const { signUp, logIn, existingUsers } = useApp();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
-      setUserName(name.trim());
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    setIsLoading(true);
+    try {
+      // Si ya existe un usuario con ese nombre, iniciar sesión
+      if (existingUsers.includes(trimmed)) {
+        await logIn(trimmed);
+      } else {
+        await signUp(trimmed);
+      }
+    } catch (err) {
+      console.error("Error al crear la cuenta:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Decorative pixels */}
+      {/* Píxeles decorativos */}
       <motion.div
         className="absolute top-20 left-10 w-4 h-4 bg-primary"
         animate={{ opacity: [0.3, 1, 0.3] }}
@@ -34,7 +53,7 @@ export const WelcomeScreen = () => {
         animate={{ opacity: [0.4, 0.8, 0.4] }}
         transition={{ duration: 2.5, repeat: Infinity, delay: 1 }}
       />
-      
+
       <PixelCard variant="panel" className="w-full max-w-md">
         <motion.div
           className="text-center"
@@ -42,7 +61,7 @@ export const WelcomeScreen = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          {/* Pixel art decorative header */}
+          {/* Cabecera decorativa pixel-art */}
           <div className="flex justify-center mb-6">
             <div className="flex gap-1">
               {[...Array(5)].map((_, i) => (
@@ -72,7 +91,7 @@ export const WelcomeScreen = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            Tu gestor de ocio retro
+            Tu gestor de ocio
           </motion.p>
 
           <motion.div
@@ -92,7 +111,7 @@ export const WelcomeScreen = () => {
                 ¿Cómo te llamas,{' '}
                 <span className="text-primary animate-flicker">Jugador 1</span>?
               </p>
-              
+
               <PixelInput
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -109,18 +128,18 @@ export const WelcomeScreen = () => {
             >
               <PixelButton
                 type="submit"
-                disabled={!name.trim()}
+                disabled={!name.trim() || isLoading}
                 className="w-full"
               >
                 <span className="flex items-center justify-center gap-2">
-                  Comenzar Aventura
-                  <span className="animate-blink">▶</span>
+                  {isLoading ? 'Cargando...' : 'Comenzar Aventura'}
+                  {!isLoading && <span className="animate-blink">▶</span>}
                 </span>
               </PixelButton>
             </motion.div>
           </form>
 
-          {/* Blinking cursor line */}
+          {/* Cursor parpadeante */}
           <motion.div
             className="mt-8 flex items-center justify-center gap-2 text-muted-foreground text-pixel-sm"
             initial={{ opacity: 0 }}

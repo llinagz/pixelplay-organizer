@@ -1,13 +1,20 @@
+/**
+ * Dashboard principal de Backlog Pixel.
+ *
+ * Muestra las categorías del usuario en un sidebar y los ítems
+ * de la categoría seleccionada en el área principal.
+ */
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PixelButton } from '@/components/PixelButton';
 import { PixelInput } from '@/components/PixelInput';
 import { PixelCard } from '@/components/PixelCard';
-import { useApp } from '@/context/AppContext';
+import { useApp, ESTADO_LABELS, ESTADO_COLORS, type OcioEstado, type TagIcon, type OcioItemUI, type TagUI } from '@/context/AppContext';
 import { getIconByType, PlusIcon, TrashIcon, GamepadIcon, BookIcon, FilmIcon, MusicIcon, TvIcon } from '@/components/PixelIcons';
-import { BacklogItem, ItemStatus, STATUS_LABELS, STATUS_COLORS, Tag } from '@/types/backlog';
 
-const ICON_OPTIONS: { type: Tag['icon']; component: React.FC<{ className?: string }> }[] = [
+// ─── Opciones de configuración ───────────────────────────────────
+
+const ICON_OPTIONS: { type: TagIcon; component: React.FC<{ className?: string }> }[] = [
   { type: 'gamepad', component: GamepadIcon },
   { type: 'book', component: BookIcon },
   { type: 'film', component: FilmIcon },
@@ -16,9 +23,11 @@ const ICON_OPTIONS: { type: Tag['icon']; component: React.FC<{ className?: strin
 ];
 
 const COLOR_OPTIONS = [
-  '#22c55e', '#3b82f6', '#a855f7', '#f59e0b', 
+  '#22c55e', '#3b82f6', '#a855f7', '#f59e0b',
   '#ef4444', '#ec4899', '#14b8a6', '#f97316',
 ];
+
+// ─── Modal para añadir ítem ──────────────────────────────────────
 
 const AddItemModal = ({
   isOpen,
@@ -30,15 +39,15 @@ const AddItemModal = ({
   tagId: string;
 }) => {
   const { addItem } = useApp();
-  const [title, setTitle] = useState('');
-  const [status, setStatus] = useState<ItemStatus>('backlog');
+  const [titulo, setTitulo] = useState('');
+  const [estado, setEstado] = useState<OcioEstado>('pendiente');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (title.trim()) {
-      addItem({ title: title.trim(), tagId, status });
-      setTitle('');
-      setStatus('backlog');
+    if (titulo.trim()) {
+      addItem({ titulo: titulo.trim(), tagId, estado });
+      setTitulo('');
+      setEstado('pendiente');
       onClose();
     }
   };
@@ -63,8 +72,8 @@ const AddItemModal = ({
           <h3 className="text-pixel-lg text-primary mb-4">Nuevo Ítem</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <PixelInput
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
               placeholder="Título..."
               autoFocus
             />
@@ -73,25 +82,25 @@ const AddItemModal = ({
                 Estado inicial
               </p>
               <div className="flex flex-wrap gap-2">
-                {(['backlog', 'playing', 'reading', 'watching'] as ItemStatus[]).map((s) => (
+                {(['pendiente', 'en_progreso'] as OcioEstado[]).map((s) => (
                   <button
                     key={s}
                     type="button"
-                    onClick={() => setStatus(s)}
+                    onClick={() => setEstado(s)}
                     className={`px-3 py-1 border-2 text-pixel-sm uppercase transition-all ${
-                      status === s
+                      estado === s
                         ? 'border-primary bg-primary/20'
                         : 'border-border hover:border-primary/50'
                     }`}
-                    style={{ color: STATUS_COLORS[s] }}
+                    style={{ color: ESTADO_COLORS[s] }}
                   >
-                    {STATUS_LABELS[s]}
+                    {ESTADO_LABELS[s]}
                   </button>
                 ))}
               </div>
             </div>
             <div className="flex gap-2">
-              <PixelButton type="submit" disabled={!title.trim()}>
+              <PixelButton type="submit" disabled={!titulo.trim()}>
                 Añadir
               </PixelButton>
               <PixelButton type="button" variant="secondary" onClick={onClose}>
@@ -105,6 +114,8 @@ const AddItemModal = ({
   );
 };
 
+// ─── Modal para añadir categoría ─────────────────────────────────
+
 const AddTagModal = ({
   isOpen,
   onClose,
@@ -113,15 +124,15 @@ const AddTagModal = ({
   onClose: () => void;
 }) => {
   const { addTag } = useApp();
-  const [name, setName] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState<Tag['icon']>('gamepad');
+  const [nombre, setNombre] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState<TagIcon>('gamepad');
   const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
-      addTag({ name: name.trim(), icon: selectedIcon, color: selectedColor });
-      setName('');
+    if (nombre.trim()) {
+      addTag({ nombre: nombre.trim(), icono: selectedIcon, color: selectedColor });
+      setNombre('');
       setSelectedIcon('gamepad');
       setSelectedColor(COLOR_OPTIONS[0]);
       onClose();
@@ -148,13 +159,13 @@ const AddTagModal = ({
           <h3 className="text-pixel-lg text-primary mb-4">Nueva Categoría</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <PixelInput
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
               placeholder="Nombre..."
               autoFocus
             />
-            
-            {/* Icon selector */}
+
+            {/* Selector de icono */}
             <div>
               <p className="text-pixel-sm text-muted-foreground mb-2 uppercase">
                 Icono
@@ -178,7 +189,7 @@ const AddTagModal = ({
               </div>
             </div>
 
-            {/* Color selector */}
+            {/* Selector de color */}
             <div>
               <p className="text-pixel-sm text-muted-foreground mb-2 uppercase">
                 Color
@@ -201,7 +212,7 @@ const AddTagModal = ({
             </div>
 
             <div className="flex gap-2">
-              <PixelButton type="submit" disabled={!name.trim()}>
+              <PixelButton type="submit" disabled={!nombre.trim()}>
                 Crear
               </PixelButton>
               <PixelButton type="button" variant="secondary" onClick={onClose}>
@@ -215,13 +226,15 @@ const AddTagModal = ({
   );
 };
 
-const ItemCard = ({ 
-  item, 
+// ─── Tarjeta de ítem ─────────────────────────────────────────────
+
+const ItemCard = ({
+  item,
   onUpdateStatus,
-  onDelete 
-}: { 
-  item: BacklogItem; 
-  onUpdateStatus: (status: ItemStatus) => void;
+  onDelete,
+}: {
+  item: OcioItemUI;
+  onUpdateStatus: (estado: OcioEstado) => void;
   onDelete: () => void;
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -242,21 +255,21 @@ const ItemCard = ({
           <div
             className="w-3 h-3 border-2"
             style={{
-              backgroundColor: STATUS_COLORS[item.status],
-              borderColor: STATUS_COLORS[item.status],
-              boxShadow: `0 0 6px ${STATUS_COLORS[item.status]}`,
+              backgroundColor: ESTADO_COLORS[item.estado],
+              borderColor: ESTADO_COLORS[item.estado],
+              boxShadow: `0 0 6px ${ESTADO_COLORS[item.estado]}`,
             }}
           />
-          <span className="text-pixel-base text-foreground">{item.title}</span>
+          <span className="text-pixel-base text-foreground">{item.titulo}</span>
         </div>
         <span
           className="text-pixel-xs uppercase px-2 py-1 border-2"
           style={{
-            color: STATUS_COLORS[item.status],
-            borderColor: STATUS_COLORS[item.status],
+            color: ESTADO_COLORS[item.estado],
+            borderColor: ESTADO_COLORS[item.estado],
           }}
         >
-          {STATUS_LABELS[item.status]}
+          {ESTADO_LABELS[item.estado]}
         </span>
       </div>
 
@@ -272,7 +285,7 @@ const ItemCard = ({
               Cambiar estado:
             </p>
             <div className="flex flex-wrap gap-2">
-              {(Object.keys(STATUS_LABELS) as ItemStatus[]).map((s) => (
+              {(Object.keys(ESTADO_LABELS) as OcioEstado[]).map((s) => (
                 <button
                   key={s}
                   onClick={(e) => {
@@ -280,18 +293,18 @@ const ItemCard = ({
                     onUpdateStatus(s);
                   }}
                   className={`px-2 py-1 border-2 text-pixel-xs uppercase transition-all ${
-                    item.status === s
+                    item.estado === s
                       ? 'border-primary bg-primary/20'
                       : 'border-border hover:border-primary/50'
                   }`}
-                  style={{ color: STATUS_COLORS[s] }}
+                  style={{ color: ESTADO_COLORS[s] }}
                 >
-                  {STATUS_LABELS[s]}
+                  {ESTADO_LABELS[s]}
                 </button>
               ))}
             </div>
-            
-            {/* Delete section */}
+
+            {/* Sección de eliminar */}
             <div className="mt-4 pt-3 border-t-2 border-border">
               {!showDeleteConfirm ? (
                 <button
@@ -343,20 +356,22 @@ const ItemCard = ({
   );
 };
 
+// ─── Dashboard principal ─────────────────────────────────────────
+
 export const Dashboard = () => {
-  const { state, updateItem, removeItem, addTag, resetApp } = useApp();
+  const { tags, items, nombreUsuario, updateItem, removeItem, logOut } = useApp();
   const [activeTagId, setActiveTagId] = useState<string | null>(
-    state.tags[0]?.id || null
+    tags[0]?.id || null,
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
 
-  const filteredItems = state.items.filter((item) => item.tagId === activeTagId);
-  const activeTag = state.tags.find((t) => t.id === activeTagId);
+  const filteredItems = items.filter((item) => item.tagId === activeTagId);
+  const activeTag = tags.find((t) => t.id === activeTagId);
 
   return (
     <div className="min-h-screen p-4 md:p-6">
-      {/* Header */}
+      {/* Cabecera */}
       <motion.header
         className="pixel-border bg-card p-4 mb-6"
         initial={{ opacity: 0, y: -20 }}
@@ -365,21 +380,21 @@ export const Dashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <h1 className="text-pixel-xl text-primary pixel-glow">
-              BACKLOG PIXEL
+              ORGANIZADOR DE OCIO
             </h1>
             <div className="h-6 w-1 bg-border hidden md:block" />
             <span className="text-pixel-base text-muted-foreground hidden md:block">
-              {state.user?.name}
+              {nombreUsuario}
             </span>
           </div>
-          <PixelButton variant="ghost" size="sm" onClick={resetApp}>
+          <PixelButton variant="ghost" size="sm" onClick={logOut}>
             Reiniciar
           </PixelButton>
         </div>
       </motion.header>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar - Tags */}
+        {/* Sidebar — Categorías */}
         <motion.aside
           className="lg:w-64 shrink-0"
           initial={{ opacity: 0, x: -20 }}
@@ -391,9 +406,9 @@ export const Dashboard = () => {
               Categorías
             </h2>
             <nav className="space-y-2">
-              {state.tags.map((tag, index) => {
-                const IconComponent = getIconByType(tag.icon);
-                const itemCount = state.items.filter((i) => i.tagId === tag.id).length;
+              {tags.map((tag, index) => {
+                const IconComponent = getIconByType(tag.icono);
+                const itemCount = items.filter((i) => i.tagId === tag.id).length;
 
                 return (
                   <motion.button
@@ -412,7 +427,7 @@ export const Dashboard = () => {
                       <IconComponent className="w-6 h-6" />
                     </span>
                     <span className="text-pixel-sm text-foreground flex-1 text-left">
-                      {tag.name}
+                      {tag.nombre}
                     </span>
                     <span className="text-pixel-xs text-muted-foreground px-2 py-1 bg-muted">
                       {itemCount}
@@ -420,12 +435,12 @@ export const Dashboard = () => {
                   </motion.button>
                 );
               })}
-              
-              {/* Add new category button */}
+
+              {/* Botón nueva categoría */}
               <motion.button
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 + state.tags.length * 0.05 }}
+                transition={{ delay: 0.1 + tags.length * 0.05 }}
                 onClick={() => setIsTagModalOpen(true)}
                 className="w-full p-3 border-2 border-dashed border-border flex items-center justify-center gap-2 transition-all hover:border-primary/50 hover:bg-muted/50"
               >
@@ -438,7 +453,7 @@ export const Dashboard = () => {
           </div>
         </motion.aside>
 
-        {/* Main content */}
+        {/* Contenido principal */}
         <motion.main
           className="flex-1"
           initial={{ opacity: 0, y: 20 }}
@@ -448,17 +463,17 @@ export const Dashboard = () => {
           <div className="pixel-border bg-card p-4 min-h-[400px]">
             {activeTag ? (
               <>
-                {/* Category header */}
+                {/* Cabecera de categoría */}
                 <div className="flex items-center justify-between mb-6 pb-4 border-b-4 border-border">
                   <div className="flex items-center gap-3">
                     <span style={{ color: activeTag.color }}>
                       {(() => {
-                        const IconComponent = getIconByType(activeTag.icon);
+                        const IconComponent = getIconByType(activeTag.icono);
                         return <IconComponent className="w-8 h-8" />;
                       })()}
                     </span>
                     <h2 className="text-pixel-lg text-foreground">
-                      {activeTag.name}
+                      {activeTag.nombre}
                     </h2>
                   </div>
                   <PixelButton size="sm" onClick={() => setIsModalOpen(true)}>
@@ -469,7 +484,7 @@ export const Dashboard = () => {
                   </PixelButton>
                 </div>
 
-                {/* Items grid */}
+                {/* Grid de ítems */}
                 {filteredItems.length > 0 ? (
                   <div className="grid gap-3">
                     <AnimatePresence mode="popLayout">
@@ -477,8 +492,8 @@ export const Dashboard = () => {
                         <ItemCard
                           key={item.id}
                           item={item}
-                          onUpdateStatus={(status) =>
-                            updateItem(item.id, { status })
+                          onUpdateStatus={(estado) =>
+                            updateItem(item.id, { estado })
                           }
                           onDelete={() => removeItem(item.id)}
                         />
@@ -496,7 +511,7 @@ export const Dashboard = () => {
                       style={{ color: activeTag.color }}
                     >
                       {(() => {
-                        const IconComponent = getIconByType(activeTag.icon);
+                        const IconComponent = getIconByType(activeTag.icono);
                         return <IconComponent className="w-16 h-16" />;
                       })()}
                     </span>
@@ -520,7 +535,7 @@ export const Dashboard = () => {
         </motion.main>
       </div>
 
-      {/* Add item modal */}
+      {/* Modal añadir ítem */}
       <AnimatePresence>
         {isModalOpen && activeTagId && (
           <AddItemModal
@@ -531,7 +546,7 @@ export const Dashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Add tag modal */}
+      {/* Modal añadir categoría */}
       <AnimatePresence>
         {isTagModalOpen && (
           <AddTagModal
