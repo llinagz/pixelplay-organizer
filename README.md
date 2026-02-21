@@ -16,7 +16,7 @@ Esta aplicación nace de la necesidad de tener un control total sobre nuestro ti
 
 ---
 
-## 🛠️ Stack Tecnológico (Stack de Nirei)
+## 🛠️ Stack Tecnológico
 
 | Capa | Tecnología | Función Clave |
 | :--- | :--- | :--- |
