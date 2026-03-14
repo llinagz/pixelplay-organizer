@@ -16,11 +16,11 @@ Esta aplicación nace de la necesidad de tener un control total sobre nuestro ti
 
 ---
 
-## 🛠️ Stack Tecnológico (Stack de Nirei)
+## 🛠️ Stack Tecnológico
 
 | Capa | Tecnología | Función Clave |
 | :--- | :--- | :--- |
-| **Framework** | **SolidStart** | Reactividad y rutas full-stack ultrarrápidas. |
+| **Framework** | **React** | Reactividad y rutas full-stack ultrarrápidas. |
 | **Persistencia** | **Jazz** | Local-first y sincronización mágica. |
 | **Cerebro IA** | **Claude Opus 4.5** | Ejecución de tareas complejas con alta precisión. |
 | **Terminal** | **OpenCode** | Interacción de la IA con el sistema de archivos. |
