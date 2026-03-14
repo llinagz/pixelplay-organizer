@@ -11,6 +11,7 @@ import { PixelInput } from '@/components/PixelInput';
 import { PixelCard } from '@/components/PixelCard';
 import { useApp, ESTADO_LABELS, ESTADO_COLORS, type OcioEstado, type TagIcon, type OcioItemUI, type TagUI } from '@/context/AppContext';
 import { getIconByType, PlusIcon, TrashIcon, GamepadIcon, BookIcon, FilmIcon, MusicIcon, TvIcon } from '@/components/PixelIcons';
+import { VALORACION_MIN, VALORACION_MAX } from '@/schema';
 
 // ─── Opciones de configuración ───────────────────────────────────
 
@@ -26,6 +27,115 @@ const COLOR_OPTIONS = [
   '#22c55e', '#3b82f6', '#a855f7', '#f59e0b',
   '#ef4444', '#ec4899', '#14b8a6', '#f97316',
 ];
+
+// ─── Colores de puntuación (rojo → amarillo → verde) ─────────────
+
+/** Devuelve el color hex según el rango de la puntuación */
+const colorPorPuntuacion = (v: number): string => {
+  if (v <= 4) return '#ef4444'; // rojo
+  if (v <= 7) return '#f59e0b'; // amarillo
+  return '#22c55e';             // verde
+};
+
+// ─── Modal de valoración ─────────────────────────────────────────
+
+/**
+ * Modal que aparece cuando el usuario marca un ítem como "Completado".
+ * Permite puntuar del 1 al 10 o saltar la valoración.
+ */
+const RatingModal = ({
+  isOpen,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  onConfirm: (valoracion: number | undefined) => void;
+}) => {
+  const [seleccion, setSeleccion] = useState<number | null>(null);
+
+  const handleConfirmar = () => {
+    onConfirm(seleccion ?? undefined);
+    setSeleccion(null);
+  };
+
+  const handleOmitir = () => {
+    onConfirm(undefined);
+    setSeleccion(null);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80"
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+      >
+        <PixelCard variant="panel" className="w-full max-w-sm">
+          <h3 className="text-pixel-lg text-primary mb-1">¡Completado!</h3>
+          <p className="text-pixel-sm text-muted-foreground mb-4 uppercase">
+            ¿Cómo lo valorarías?
+          </p>
+
+          {/* Cuadrícula de botones 1–10 */}
+          <div className="grid grid-cols-5 gap-2 mb-4">
+            {Array.from({ length: VALORACION_MAX - VALORACION_MIN + 1 }, (_, i) => {
+              const v = VALORACION_MIN + i;
+              const color = colorPorPuntuacion(v);
+              const estaSeleccionado = seleccion === v;
+              return (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setSeleccion(v)}
+                  className={`py-2 border-2 text-pixel-base font-bold transition-all ${
+                    estaSeleccionado
+                      ? 'border-primary bg-primary/20'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                  style={{ color }}
+                >
+                  {v}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Muestra la puntuación seleccionada */}
+          {seleccion !== null && (
+            <motion.p
+              key={seleccion}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-pixel-sm text-center mb-4 uppercase"
+              style={{ color: colorPorPuntuacion(seleccion) }}
+            >
+              ★ {seleccion}/10
+            </motion.p>
+          )}
+
+          <div className="flex gap-2">
+            <PixelButton
+              type="button"
+              disabled={seleccion === null}
+              onClick={handleConfirmar}
+            >
+              Guardar
+            </PixelButton>
+            <PixelButton type="button" variant="secondary" onClick={handleOmitir}>
+              Omitir
+            </PixelButton>
+          </div>
+        </PixelCard>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 // ─── Modal para añadir ítem ──────────────────────────────────────
 
@@ -234,125 +344,171 @@ const ItemCard = ({
   onDelete,
 }: {
   item: OcioItemUI;
-  onUpdateStatus: (estado: OcioEstado) => void;
+  /** Callback para cambiar estado; si el nuevo estado es "completado", incluye la valoración opcional */
+  onUpdateStatus: (estado: OcioEstado, valoracion?: number) => void;
   onDelete: () => void;
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  /** Estado pendiente mientras esperamos la valoración del modal */
+  const [estadoPendiente, setEstadoPendiente] = useState<OcioEstado | null>(null);
+
+  /** Gestiona el cambio de estado interceptando "completado" para pedir valoración */
+  const handleEstadoClick = (s: OcioEstado, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (s === 'completado') {
+      // Abrir modal de valoración antes de persistir
+      setEstadoPendiente('completado');
+    } else {
+      onUpdateStatus(s);
+    }
+  };
+
+  /** Confirma la valoración (o la omite) y persiste el estado completado */
+  const handleRatingConfirm = (valoracion: number | undefined) => {
+    if (estadoPendiente) {
+      onUpdateStatus(estadoPendiente, valoracion);
+      setEstadoPendiente(null);
+      setIsExpanded(false);
+    }
+  };
 
   return (
-    <motion.div
-      layout
-      className="pixel-border-sm bg-card p-3"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <div
-        className="flex items-center justify-between cursor-pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
+    <>
+      <motion.div
+        layout
+        className="pixel-border-sm bg-card p-3"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
       >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-3 h-3 border-2"
-            style={{
-              backgroundColor: ESTADO_COLORS[item.estado],
-              borderColor: ESTADO_COLORS[item.estado],
-              boxShadow: `0 0 6px ${ESTADO_COLORS[item.estado]}`,
-            }}
-          />
-          <span className="text-pixel-base text-foreground">{item.titulo}</span>
-        </div>
-        <span
-          className="text-pixel-xs uppercase px-2 py-1 border-2"
-          style={{
-            color: ESTADO_COLORS[item.estado],
-            borderColor: ESTADO_COLORS[item.estado],
-          }}
+        <div
+          className="flex items-center justify-between cursor-pointer"
+          onClick={() => setIsExpanded(!isExpanded)}
         >
-          {ESTADO_LABELS[item.estado]}
-        </span>
-      </div>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-3 h-3 border-2"
+              style={{
+                backgroundColor: ESTADO_COLORS[item.estado],
+                borderColor: ESTADO_COLORS[item.estado],
+                boxShadow: `0 0 6px ${ESTADO_COLORS[item.estado]}`,
+              }}
+            />
+            <span className="text-pixel-base text-foreground">{item.titulo}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Mostrar valoración si existe */}
+            {item.valoracion !== undefined && (
+              <span
+                className="text-pixel-xs px-2 py-1 border-2"
+                style={{
+                  color: colorPorPuntuacion(item.valoracion),
+                  borderColor: colorPorPuntuacion(item.valoracion),
+                }}
+              >
+                ★ {item.valoracion}/10
+              </span>
+            )}
+            <span
+              className="text-pixel-xs uppercase px-2 py-1 border-2"
+              style={{
+                color: ESTADO_COLORS[item.estado],
+                borderColor: ESTADO_COLORS[item.estado],
+              }}
+            >
+              {ESTADO_LABELS[item.estado]}
+            </span>
+          </div>
+        </div>
 
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="mt-3 pt-3 border-t-2 border-border overflow-hidden"
+            >
+              <p className="text-pixel-sm text-muted-foreground mb-2 uppercase">
+                Cambiar estado:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(Object.keys(ESTADO_LABELS) as OcioEstado[]).map((s) => (
+                  <button
+                    key={s}
+                    onClick={(e) => handleEstadoClick(s, e)}
+                    className={`px-2 py-1 border-2 text-pixel-xs uppercase transition-all ${
+                      item.estado === s
+                        ? 'border-primary bg-primary/20'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    style={{ color: ESTADO_COLORS[s] }}
+                  >
+                    {ESTADO_LABELS[s]}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sección de eliminar */}
+              <div className="mt-4 pt-3 border-t-2 border-border">
+                {!showDeleteConfirm ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDeleteConfirm(true);
+                    }}
+                    className="flex items-center gap-2 px-3 py-1 border-2 border-destructive text-destructive text-pixel-xs uppercase hover:bg-destructive/20 transition-all"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                    Eliminar
+                  </button>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex flex-col gap-2"
+                  >
+                    <p className="text-pixel-sm text-destructive uppercase">
+                      ¿Eliminar este ítem?
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete();
+                        }}
+                        className="px-3 py-1 border-2 border-destructive bg-destructive text-destructive-foreground text-pixel-xs uppercase hover:brightness-110 transition-all"
+                      >
+                        Sí, eliminar
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowDeleteConfirm(false);
+                        }}
+                        className="px-3 py-1 border-2 border-border text-muted-foreground text-pixel-xs uppercase hover:border-primary/50 transition-all"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Modal de valoración (fuera del layout de la tarjeta) */}
       <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="mt-3 pt-3 border-t-2 border-border overflow-hidden"
-          >
-            <p className="text-pixel-sm text-muted-foreground mb-2 uppercase">
-              Cambiar estado:
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {(Object.keys(ESTADO_LABELS) as OcioEstado[]).map((s) => (
-                <button
-                  key={s}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onUpdateStatus(s);
-                  }}
-                  className={`px-2 py-1 border-2 text-pixel-xs uppercase transition-all ${
-                    item.estado === s
-                      ? 'border-primary bg-primary/20'
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                  style={{ color: ESTADO_COLORS[s] }}
-                >
-                  {ESTADO_LABELS[s]}
-                </button>
-              ))}
-            </div>
-
-            {/* Sección de eliminar */}
-            <div className="mt-4 pt-3 border-t-2 border-border">
-              {!showDeleteConfirm ? (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowDeleteConfirm(true);
-                  }}
-                  className="flex items-center gap-2 px-3 py-1 border-2 border-destructive text-destructive text-pixel-xs uppercase hover:bg-destructive/20 transition-all"
-                >
-                  <TrashIcon className="w-4 h-4" />
-                  Eliminar
-                </button>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex flex-col gap-2"
-                >
-                  <p className="text-pixel-sm text-destructive uppercase">
-                    ¿Eliminar este ítem?
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete();
-                      }}
-                      className="px-3 py-1 border-2 border-destructive bg-destructive text-destructive-foreground text-pixel-xs uppercase hover:brightness-110 transition-all"
-                    >
-                      Sí, eliminar
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowDeleteConfirm(false);
-                      }}
-                      className="px-3 py-1 border-2 border-border text-muted-foreground text-pixel-xs uppercase hover:border-primary/50 transition-all"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-          </motion.div>
+        {estadoPendiente === 'completado' && (
+          <RatingModal
+            isOpen
+            onConfirm={handleRatingConfirm}
+          />
         )}
       </AnimatePresence>
-    </motion.div>
+    </>
   );
 };
 
@@ -492,8 +648,10 @@ export const Dashboard = () => {
                         <ItemCard
                           key={item.id}
                           item={item}
-                          onUpdateStatus={(estado) =>
-                            updateItem(item.id, { estado })
+                          onUpdateStatus={(estado, valoracion) =>
+                            updateItem(item.id, valoracion !== undefined
+                              ? { estado, valoracion }
+                              : { estado })
                           }
                           onDelete={() => removeItem(item.id)}
                         />

@@ -17,6 +17,7 @@ import {
   ESTADO_LABELS,
   ESTADO_COLORS,
   DEFAULT_TAGS,
+  esValoracionValida,
 } from "@/schema";
 
 // ─── Tipos para la interfaz del contexto ─────────────────────────
@@ -222,7 +223,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const item = itemArr.find((i) => i != null && coId(i) === id);
       if (!item) return;
 
-      item.$jazz.applyDiff(updates);
+      // Filtrar valoración inválida para no persistir basura
+      const diff: typeof updates = { ...updates };
+      if (diff.valoracion !== undefined && !esValoracionValida(diff.valoracion)) {
+        delete diff.valoracion;
+      }
+
+      item.$jazz.applyDiff(diff);
     },
     [root],
   );

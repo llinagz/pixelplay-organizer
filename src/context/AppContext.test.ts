@@ -286,6 +286,76 @@ describe("Operaciones CRUD — AppContext", () => {
     });
   });
 
+  describe("updateItem — valoración", () => {
+    it("guarda la valoración junto al estado completado", () => {
+      const tag = Tag.create({
+        nombre: "Juegos",
+        icono: "gamepad",
+        color: "#22c55e",
+      });
+      const item = OcioItem.create({
+        titulo: "Hollow Knight",
+        tipo: "videojuego",
+        estado: "en_progreso",
+        tag,
+      });
+      root.items.$jazz.push(item);
+
+      // Marcar como completado con valoración simultánea
+      item.$jazz.applyDiff({ estado: "completado", valoracion: 9 });
+
+      expect(item.estado).toBe("completado");
+      expect(item.valoracion).toBe(9);
+    });
+
+    it("permite actualizar la valoración después de completar", () => {
+      const tag = Tag.create({
+        nombre: "Cine",
+        icono: "film",
+        color: "#a855f7",
+      });
+      const item = OcioItem.create({
+        titulo: "2001: A Space Odyssey",
+        tipo: "cine",
+        estado: "completado",
+        tag,
+        valoracion: 7,
+      });
+      root.items.$jazz.push(item);
+
+      expect(item.valoracion).toBe(7);
+
+      // Actualizar solo la valoración sin tocar el estado
+      item.$jazz.applyDiff({ valoracion: 10 });
+      expect(item.valoracion).toBe(10);
+      expect(item.estado).toBe("completado");
+    });
+
+    it("la valoración es independiente del estado", () => {
+      const tag = Tag.create({
+        nombre: "Libros",
+        icono: "book",
+        color: "#3b82f6",
+      });
+      const item = OcioItem.create({
+        titulo: "Fundación",
+        tipo: "libro",
+        estado: "en_progreso",
+        tag,
+      });
+      root.items.$jazz.push(item);
+
+      // Se puede asignar una valoración sin cambiar el estado
+      item.$jazz.applyDiff({ valoracion: 8 });
+      expect(item.valoracion).toBe(8);
+      expect(item.estado).toBe("en_progreso");
+
+      // Y se puede quitar la valoración con undefined
+      item.$jazz.applyDiff({ valoracion: undefined });
+      expect(item.valoracion).toBeUndefined();
+    });
+  });
+
   describe("removeItem", () => {
     it("elimina un ítem por su ID sin afectar a otros", () => {
       const tag = Tag.create({

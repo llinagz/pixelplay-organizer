@@ -21,6 +21,9 @@ import {
   TAG_ICONS,
   OCIO_TIPOS,
   OCIO_ESTADOS,
+  esValoracionValida,
+  VALORACION_MIN,
+  VALORACION_MAX,
 } from "./schema";
 
 describe("Esquemas Jazz — Backlog Pixel", () => {
@@ -185,6 +188,39 @@ describe("Esquemas Jazz — Backlog Pixel", () => {
       for (const estado of OCIO_ESTADOS) {
         expect(ESTADO_COLORS[estado]).toBeDefined();
       }
+    });
+  });
+
+  // ─── Validación de valoración ────────────────────────────────
+
+  describe("esValoracionValida", () => {
+    it("acepta todos los valores enteros del 1 al 10", () => {
+      for (let v = VALORACION_MIN; v <= VALORACION_MAX; v++) {
+        expect(esValoracionValida(v)).toBe(true);
+      }
+    });
+
+    it("rechaza valores por debajo del mínimo", () => {
+      expect(esValoracionValida(0)).toBe(false);
+      expect(esValoracionValida(-1)).toBe(false);
+      expect(esValoracionValida(-100)).toBe(false);
+    });
+
+    it("rechaza valores por encima del máximo", () => {
+      expect(esValoracionValida(11)).toBe(false);
+      expect(esValoracionValida(100)).toBe(false);
+    });
+
+    it("rechaza valores no enteros", () => {
+      expect(esValoracionValida(5.5)).toBe(false);
+      expect(esValoracionValida(1.1)).toBe(false);
+      expect(esValoracionValida(9.9)).toBe(false);
+    });
+
+    it("rechaza NaN e Infinity", () => {
+      expect(esValoracionValida(NaN)).toBe(false);
+      expect(esValoracionValida(Infinity)).toBe(false);
+      expect(esValoracionValida(-Infinity)).toBe(false);
     });
   });
 });
