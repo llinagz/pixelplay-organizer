@@ -38,6 +38,19 @@ export const OCIO_ESTADOS = [
 ] as const;
 export type OcioEstado = (typeof OCIO_ESTADOS)[number];
 
+// ─── Reglas de negocio ───────────────────────────────────────────
+
+/** Rango válido de valoración (1–10) */
+export const VALORACION_MIN = 1;
+export const VALORACION_MAX = 10;
+
+/**
+ * Comprueba si una valoración numérica es válida.
+ * Devuelve true si está en el rango [1, 10] y es entero.
+ */
+export const esValoracionValida = (v: number): boolean =>
+  Number.isInteger(v) && v >= VALORACION_MIN && v <= VALORACION_MAX;
+
 // ─── Etiquetas por defecto para nuevos usuarios ──────────────────
 
 export const DEFAULT_TAGS: Array<{
