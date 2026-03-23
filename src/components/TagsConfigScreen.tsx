@@ -31,6 +31,15 @@ const ICON_OPTIONS: { id: TagIcon; label: string }[] = [
   { id: 'film', label: 'Cine' },
   { id: 'music', label: 'Música' },
   { id: 'tv', label: 'Series' },
+  { id: 'monitor', label: 'PC / Anime' },
+  { id: 'popcorn', label: 'Snack' },
+  { id: 'comic', label: 'Cómic / Manga' },
+  { id: 'utensils', label: 'Comida' },
+  { id: 'ticket', label: 'Evento' },
+  { id: 'cake', label: 'Fiesta' },
+  { id: 'gift', label: 'Regalo' },
+  { id: 'cart', label: 'Compra' },
+  { id: 'dumbbell', label: 'Deporte' },
 ];
 
 export const TagsConfigScreen = () => {
