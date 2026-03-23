@@ -67,6 +67,7 @@ interface AppContextType {
   completeOnboarding: () => void;
   addTag: (tag: { nombre: string; icono: TagIcon; color: string }) => void;
   removeTag: (id: string) => void;
+  reorderTags: (newOrderIds: string[]) => void;
   addItem: (item: { titulo: string; tagId: string; estado: OcioEstado }) => void;
   updateItem: (id: string, updates: Partial<{ estado: OcioEstado; valoracion: number; notas: string }>) => void;
   removeItem: (id: string) => void;
@@ -185,6 +186,27 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     [root],
   );
 
+  const reorderTags = useCallback(
+    (newOrderIds: string[]) => {
+      if (!root?.tags) return;
+
+      for (let i = 0; i < newOrderIds.length; i++) {
+        const id = newOrderIds[i];
+        const currentArr = toArray(root.tags);
+        const currentIndex = currentArr.findIndex((t) => t != null && coId(t) === id);
+
+        if (currentIndex !== -1 && currentIndex !== i) {
+          const tag = currentArr[currentIndex];
+          if (tag) {
+            root.tags.$jazz.splice(currentIndex, 1);
+            root.tags.$jazz.splice(i, 0, tag);
+          }
+        }
+      }
+    },
+    [root],
+  );
+
   const addItem = useCallback(
     (itemData: { titulo: string; tagId: string; estado: OcioEstado }) => {
       if (!root?.tags || !root?.items) return;
@@ -268,6 +290,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       completeOnboarding,
       addTag,
       removeTag,
+      reorderTags,
       addItem,
       updateItem,
       removeItem,
@@ -276,7 +299,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     [
       demoAuth, isLoaded, profile, root,
       tags, items,
-      completeOnboarding, addTag, removeTag,
+      completeOnboarding, addTag, removeTag, reorderTags,
       addItem, updateItem, removeItem, logOut,
     ],
   );

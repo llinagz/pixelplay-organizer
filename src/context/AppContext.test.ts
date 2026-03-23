@@ -114,6 +114,45 @@ describe("Operaciones CRUD — AppContext", () => {
     });
   });
 
+  describe("reorderTags", () => {
+    it("reordena los tags correctamente", () => {
+      // Setup: añadir 3 tags
+      const t1 = Tag.create({ nombre: "Uno", icono: "gamepad", color: "#000" });
+      const t2 = Tag.create({ nombre: "Dos", icono: "book", color: "#000" });
+      const t3 = Tag.create({ nombre: "Tres", icono: "film", color: "#000" });
+      root.tags.$jazz.push(t1);
+      root.tags.$jazz.push(t2);
+      root.tags.$jazz.push(t3);
+
+      expect(root.tags.length).toBe(3);
+      expect(toLoadedArray<Tag>(root.tags)[0]!.nombre).toBe("Uno");
+      expect(toLoadedArray<Tag>(root.tags)[1]!.nombre).toBe("Dos");
+      expect(toLoadedArray<Tag>(root.tags)[2]!.nombre).toBe("Tres");
+
+      // Simular reorder (t3, t1, t2)
+      const newOrderIds = [coId(t3), coId(t1), coId(t2)];
+
+      for (let i = 0; i < newOrderIds.length; i++) {
+        const id = newOrderIds[i];
+        const currentArr = toLoadedArray<Tag>(root.tags);
+        const currentIndex = currentArr.findIndex((t) => t != null && coId(t) === id);
+
+        if (currentIndex !== -1 && currentIndex !== i) {
+          const tag = currentArr[currentIndex];
+          if (tag) {
+            root.tags.$jazz.splice(currentIndex, 1);
+            root.tags.$jazz.splice(i, 0, tag);
+          }
+        }
+      }
+
+      const reordered = toLoadedArray<Tag>(root.tags);
+      expect(reordered[0]!.nombre).toBe("Tres");
+      expect(reordered[1]!.nombre).toBe("Uno");
+      expect(reordered[2]!.nombre).toBe("Dos");
+    });
+  });
+
   describe("removeTag", () => {
     it("elimina un tag por su ID", () => {
       const tag = Tag.create({

@@ -5,7 +5,7 @@
  * de la categoría seleccionada en el área principal.
  */
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { PixelButton } from '@/components/PixelButton';
 import { PixelInput } from '@/components/PixelInput';
 import { PixelCard } from '@/components/PixelCard';
@@ -515,7 +515,7 @@ const ItemCard = ({
 // ─── Dashboard principal ─────────────────────────────────────────
 
 export const Dashboard = () => {
-  const { tags, items, nombreUsuario, updateItem, removeItem, logOut } = useApp();
+  const { tags, items, nombreUsuario, updateItem, removeItem, logOut, reorderTags } = useApp();
   const [activeTagId, setActiveTagId] = useState<string | null>(
     tags[0]?.id || null,
   );
@@ -562,35 +562,43 @@ export const Dashboard = () => {
               Categorías
             </h2>
             <nav className="space-y-2">
-              {tags.map((tag, index) => {
-                const IconComponent = getIconByType(tag.icono);
-                const itemCount = items.filter((i) => i.tagId === tag.id).length;
+              <Reorder.Group
+                axis="y"
+                values={tags}
+                onReorder={(newTags) => reorderTags(newTags.map((t) => t.id))}
+                className="space-y-2"
+              >
+                {tags.map((tag, index) => {
+                  const IconComponent = getIconByType(tag.icono);
+                  const itemCount = items.filter((i) => i.tagId === tag.id).length;
 
-                return (
-                  <motion.button
-                    key={tag.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 + index * 0.05 }}
-                    onClick={() => setActiveTagId(tag.id)}
-                    className={`w-full p-3 border-2 flex items-center gap-3 transition-all ${
-                      activeTagId === tag.id
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                    }`}
-                  >
-                    <span style={{ color: tag.color }}>
-                      <IconComponent className="w-6 h-6" />
-                    </span>
-                    <span className="text-pixel-sm text-foreground flex-1 text-left">
-                      {tag.nombre}
-                    </span>
-                    <span className="text-pixel-xs text-muted-foreground px-2 py-1 bg-muted">
-                      {itemCount}
-                    </span>
-                  </motion.button>
-                );
-              })}
+                  return (
+                    <Reorder.Item
+                      key={tag.id}
+                      value={tag}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 + index * 0.05 }}
+                      onClick={() => setActiveTagId(tag.id)}
+                      className={`w-full p-3 border-2 flex items-center gap-3 transition-colors cursor-grab active:cursor-grabbing ${
+                        activeTagId === tag.id
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                      }`}
+                    >
+                      <span style={{ color: tag.color }}>
+                        <IconComponent className="w-6 h-6" />
+                      </span>
+                      <span className="text-pixel-sm text-foreground flex-1 text-left">
+                        {tag.nombre}
+                      </span>
+                      <span className="text-pixel-xs text-muted-foreground px-2 py-1 bg-muted">
+                        {itemCount}
+                      </span>
+                    </Reorder.Item>
+                  );
+                })}
+              </Reorder.Group>
 
               {/* Botón nueva categoría */}
               <motion.button
