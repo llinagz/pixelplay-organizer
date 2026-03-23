@@ -38,7 +38,16 @@ const tipoMap: Record<TagIcon, OcioTipo> = {
   film: "cine",
   music: "musica",
   tv: "serie",
-  custom: "videojuego",
+  monitor: "anime",
+  popcorn: "cine",
+  comic: "manga",
+  utensils: "comida",
+  ticket: "plan",
+  cake: "evento",
+  gift: "compra",
+  cart: "compra",
+  dumbbell: "deporte",
+  custom: "otro",
 };
 
 // ─── Fixtures ────────────────────────────────────────────────────
@@ -258,14 +267,15 @@ describe("Operaciones CRUD — AppContext", () => {
     });
 
     it("infiere el tipo correcto según el icono del tag", () => {
-      const iconos: TagIcon[] = ["gamepad", "book", "film", "music", "tv", "custom"];
+      const iconos: TagIcon[] = [
+        "gamepad", "book", "film", "music", "tv", 
+        "monitor", "popcorn", "comic", "utensils", 
+        "ticket", "cake", "gift", "cart", "dumbbell", "custom"
+      ];
       const tiposEsperados: OcioTipo[] = [
-        "videojuego",
-        "libro",
-        "cine",
-        "musica",
-        "serie",
-        "videojuego",
+        "videojuego", "libro", "cine", "musica", "serie",
+        "anime", "cine", "manga", "comida",
+        "plan", "evento", "compra", "compra", "deporte", "otro"
       ];
 
       for (let i = 0; i < iconos.length; i++) {
@@ -274,6 +284,23 @@ describe("Operaciones CRUD — AppContext", () => {
           icono: iconos[i]!,
           color: "#000",
         });
+        const tipoMap: Record<TagIcon, OcioTipo> = {
+          gamepad: "videojuego",
+          book: "libro",
+          film: "cine",
+          music: "musica",
+          tv: "serie",
+          monitor: "anime",
+          popcorn: "cine",
+          comic: "manga",
+          utensils: "comida",
+          ticket: "plan",
+          cake: "evento",
+          gift: "compra",
+          cart: "compra",
+          dumbbell: "deporte",
+          custom: "otro",
+        };
         const tipoInferido = tipoMap[tag.icono];
         expect(tipoInferido).toBe(tiposEsperados[i]);
       }

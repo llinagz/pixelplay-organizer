@@ -15,6 +15,15 @@ export const TAG_ICONS = [
   "film",
   "music",
   "tv",
+  "monitor",
+  "popcorn",
+  "comic",
+  "utensils",
+  "ticket",
+  "cake",
+  "gift",
+  "cart",
+  "dumbbell",
   "custom",
 ] as const;
 export type TagIcon = (typeof TAG_ICONS)[number];
@@ -26,6 +35,14 @@ export const OCIO_TIPOS = [
   "cine",
   "musica",
   "serie",
+  "manga",
+  "anime",
+  "comida",
+  "plan",
+  "evento",
+  "compra",
+  "deporte",
+  "otro",
 ] as const;
 export type OcioTipo = (typeof OCIO_TIPOS)[number];
 

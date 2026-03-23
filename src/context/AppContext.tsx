@@ -223,9 +223,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         film: "cine",
         music: "musica",
         tv: "serie",
-        custom: "videojuego",
+        monitor: "anime",
+        popcorn: "cine",
+        comic: "manga",
+        utensils: "comida",
+        ticket: "plan",
+        cake: "evento",
+        gift: "compra",
+        cart: "compra",
+        dumbbell: "deporte",
+        custom: "otro",
       };
-      const tipo: OcioTipo = tipoMap[tag.icono] ?? "videojuego";
+      const tipo: OcioTipo = tipoMap[tag.icono] ?? "otro";
 
       const nuevoItem = OcioItem.create({
         titulo: itemData.titulo,

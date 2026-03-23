@@ -10,7 +10,7 @@ import { PixelButton } from '@/components/PixelButton';
 import { PixelInput } from '@/components/PixelInput';
 import { PixelCard } from '@/components/PixelCard';
 import { useApp, ESTADO_LABELS, ESTADO_COLORS, type OcioEstado, type TagIcon, type OcioItemUI, type TagUI } from '@/context/AppContext';
-import { getIconByType, PlusIcon, TrashIcon, GamepadIcon, BookIcon, FilmIcon, MusicIcon, TvIcon } from '@/components/PixelIcons';
+import { getIconByType, PlusIcon, TrashIcon, GamepadIcon, BookIcon, FilmIcon, MusicIcon, TvIcon, MonitorIcon, PopcornIcon, ComicIcon, UtensilsIcon, TicketIcon, CakeIcon, GiftIcon, CartIcon, DumbbellIcon } from '@/components/PixelIcons';
 import { VALORACION_MIN, VALORACION_MAX } from '@/schema';
 
 // ─── Opciones de configuración ───────────────────────────────────
@@ -21,6 +21,15 @@ const ICON_OPTIONS: { type: TagIcon; component: React.FC<{ className?: string }>
   { type: 'film', component: FilmIcon },
   { type: 'music', component: MusicIcon },
   { type: 'tv', component: TvIcon },
+  { type: 'monitor', component: MonitorIcon },
+  { type: 'popcorn', component: PopcornIcon },
+  { type: 'comic', component: ComicIcon },
+  { type: 'utensils', component: UtensilsIcon },
+  { type: 'ticket', component: TicketIcon },
+  { type: 'cake', component: CakeIcon },
+  { type: 'gift', component: GiftIcon },
+  { type: 'cart', component: CartIcon },
+  { type: 'dumbbell', component: DumbbellIcon },
 ];
 
 const COLOR_OPTIONS = [
