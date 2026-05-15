@@ -9,8 +9,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PixelButton } from '@/components/PixelButton';
 import { PixelInput } from '@/components/PixelInput';
 import { PixelCard } from '@/components/PixelCard';
-import { useApp, type TagIcon } from '@/context/AppContext';
-import { PlusIcon, getIconByType } from '@/components/PixelIcons';
+import { type TagIcon } from '@/schema';
+import { useAuthActionsState, useAuthState, useBacklogActions, useTags } from '@/state';
+import { PlusIcon } from '@/components/PixelIcons';
+import { getIconByType } from '@/components/iconMap';
 
 /** Colores predefinidos para las etiquetas */
 const PRESET_COLORS = [
@@ -43,7 +45,10 @@ const ICON_OPTIONS: { id: TagIcon; label: string }[] = [
 ];
 
 export const TagsConfigScreen = () => {
-  const { nombreUsuario, tags, completeOnboarding, addTag, removeTag } = useApp();
+  const { nombreUsuario } = useAuthState();
+  const { completeOnboarding } = useAuthActionsState();
+  const { addTag, removeTag } = useBacklogActions();
+  const tags = useTags();
   const [isAdding, setIsAdding] = useState(false);
   const [newTagName, setNewTagName] = useState('');
   const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[0]);

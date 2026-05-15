@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { OcioItem, Tag, type OcioEstado, type TagIcon } from "@/schema";
+import { OcioItem, Tag, type BacklogPixelRoot, type OcioEstado } from "@/schema";
 import { esValoracionValida } from "@/schema";
 import { ocioTipoFromTagIcon } from "@/domain/ocio";
 import { clearAppStorage } from "@/domain/session";
@@ -14,10 +14,11 @@ import {
   type ImportResult,
 } from "@/domain/sync";
 
-const coId = (coValue: { $jazz: { readonly id: string } }): string => coValue.$jazz.id;
-const toArray = <T,>(list: ArrayLike<T>): T[] => Array.from(list);
+export type CoValueWithId = { $jazz: { readonly id: string } };
+export const coId = (coValue: CoValueWithId): string => coValue.$jazz.id;
+export const toArray = <T,>(list: ArrayLike<T>): T[] => Array.from(list);
 
-export const useOnboardingActions = (root: any) => {
+export const useOnboardingActions = (root: BacklogPixelRoot | undefined) => {
   const completeOnboarding = useCallback(() => {
     if (!root) return;
     root.$jazz.applyDiff({ onboardingCompletado: true });
@@ -26,9 +27,9 @@ export const useOnboardingActions = (root: any) => {
   return { completeOnboarding };
 };
 
-export const useTagActions = (root: any) => {
+export const useTagActions = (root: BacklogPixelRoot | undefined) => {
   const addTag = useCallback(
-    (tagData: { nombre: string; icono: TagIcon; color: string }) => {
+    (tagData: { nombre: string; icono: Tag["icono"]; color: string }) => {
       if (!root?.tags) return;
       const nuevoTag = Tag.create(tagData);
       root.tags.$jazz.push(nuevoTag);
@@ -76,7 +77,7 @@ export const useTagActions = (root: any) => {
   return { addTag, removeTag, reorderTags };
 };
 
-export const useItemActions = (root: any) => {
+export const useItemActions = (root: BacklogPixelRoot | undefined) => {
   const addItem = useCallback(
     (itemData: { titulo: string; tagId: string; estado: OcioEstado }) => {
       if (!root?.tags || !root?.items) return;
@@ -142,7 +143,7 @@ export const useItemActions = (root: any) => {
   return { addItem, updateItem, removeItem };
 };
 
-const getPayloadFromRoot = (root: any): ExportPayload => {
+const getPayloadFromRoot = (root: BacklogPixelRoot | undefined): ExportPayload => {
   const tags = root?.tags ? toArray(root.tags).filter(Boolean) : [];
   const items = root?.items ? toArray(root.items).filter(Boolean) : [];
 
@@ -150,12 +151,12 @@ const getPayloadFromRoot = (root: any): ExportPayload => {
     version: 1,
     exportedAt: new Date().toISOString(),
     onboardingCompletado: Boolean(root?.onboardingCompletado),
-    tags: tags.map((tag: any) => ({
+    tags: tags.map((tag) => ({
       nombre: tag.nombre,
       icono: tag.icono,
       color: tag.color,
     })),
-    items: items.map((item: any) => ({
+    items: items.map((item) => ({
       titulo: item.titulo,
       tipo: item.tipo,
       estado: item.estado,
@@ -167,7 +168,7 @@ const getPayloadFromRoot = (root: any): ExportPayload => {
   };
 };
 
-export const useSyncActions = (root: any) => {
+export const useSyncActions = (root: BacklogPixelRoot | undefined) => {
   const exportData = useCallback((): string => {
     const payload = getPayloadFromRoot(root);
     return JSON.stringify(payload);
@@ -194,7 +195,7 @@ export const useSyncActions = (root: any) => {
         while (root.items.length > 0) root.items.$jazz.splice(0, 1);
         while (root.tags.length > 0) root.tags.$jazz.splice(0, 1);
 
-        const tagsByName = new Map<string, any>();
+        const tagsByName = new Map<string, Tag>();
         for (const tag of payload.tags) {
           const created = Tag.create(tag);
           root.tags.$jazz.push(created);
@@ -259,6 +260,3 @@ export const useAuthActions = () => {
 
   return { logOut };
 };
-
-export { coId, toArray };
-

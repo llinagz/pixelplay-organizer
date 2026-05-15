@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { PixelButton } from "@/components/PixelButton";
 import { PixelCard } from "@/components/PixelCard";
 import { PixelInput } from "@/components/PixelInput";
-import { useApp, type TagIcon } from "@/context/AppContext";
+import { type TagIcon } from "@/schema";
 import {
   BookIcon,
   CakeIcon,
@@ -21,6 +21,7 @@ import {
 } from "@/components/PixelIcons";
 import type { FC } from "react";
 import { useState } from "react";
+import { useBacklogActions } from "@/state";
 
 const ICON_OPTIONS: { type: TagIcon; component: FC<{ className?: string }> }[] = [
   { type: "gamepad", component: GamepadIcon },
@@ -47,7 +48,7 @@ interface AddTagModalProps {
 }
 
 export const AddTagModal = ({ isOpen, onClose }: AddTagModalProps) => {
-  const { addTag } = useApp();
+  const { addTag } = useBacklogActions();
   const [nombre, setNombre] = useState("");
   const [selectedIcon, setSelectedIcon] = useState<TagIcon>("gamepad");
   const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);

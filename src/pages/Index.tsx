@@ -1,4 +1,4 @@
-import { AppProvider, useApp } from '@/context/AppContext';
+import { AppStateProvider, useAuthState } from '@/state';
 import { lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -7,7 +7,7 @@ const TagsConfigScreen = lazy(() => import('@/components/TagsConfigScreen').then
 const Dashboard = lazy(() => import('@/components/Dashboard').then((m) => ({ default: m.Dashboard })));
 
 const AppContent = () => {
-  const { authState, onboardingCompletado } = useApp();
+  const { authState, onboardingCompletado } = useAuthState();
 
   // Determinar qué pantalla mostrar según el estado del usuario
   const getScreen = () => {
@@ -69,9 +69,9 @@ const AppContent = () => {
 
 const Index = () => {
   return (
-    <AppProvider>
+    <AppStateProvider>
       <AppContent />
-    </AppProvider>
+    </AppStateProvider>
   );
 };
 

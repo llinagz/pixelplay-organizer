@@ -38,3 +38,26 @@ export interface SyncActions {
   importData: (payload: string) => ImportResult;
 }
 
+export interface AuthSlice {
+  authState: AuthState;
+  nombreUsuario?: string;
+  onboardingCompletado: boolean;
+  signUp: (nombre: string) => Promise<void>;
+  logIn: (nombre: string) => Promise<void>;
+  existingUsers: string[];
+  completeOnboarding: () => void;
+  logOut: () => void;
+}
+
+export interface BacklogSlice {
+  tags: TagUI[];
+  items: OcioItemUI[];
+  addTag: (tag: { nombre: string; icono: TagIcon; color: string }) => void;
+  removeTag: (id: string) => void;
+  reorderTags: (newOrderIds: string[]) => void;
+  addItem: (item: { titulo: string; tagId: string; estado: OcioEstado }) => void;
+  updateItem: (id: string, updates: Partial<{ estado: OcioEstado; valoracion: number; notas: string }>) => void;
+  removeItem: (id: string) => void;
+}
+
+export interface SyncSlice extends SyncSnapshot, SyncActions {}
