@@ -243,37 +243,3 @@ export const TrashIcon = ({ className = "w-8 h-8" }: { className?: string }) => 
   </svg>
 );
 
-export const getIconByType = (type: string) => {
-  switch (type) {
-    case 'gamepad':
-      return GamepadIcon;
-    case 'book':
-      return BookIcon;
-    case 'film':
-      return FilmIcon;
-    case 'music':
-      return MusicIcon;
-    case 'tv':
-      return TvIcon;
-    case 'monitor':
-      return MonitorIcon;
-    case 'popcorn':
-      return PopcornIcon;
-    case 'comic':
-      return ComicIcon;
-    case 'utensils':
-      return UtensilsIcon;
-    case 'ticket':
-      return TicketIcon;
-    case 'cake':
-      return CakeIcon;
-    case 'gift':
-      return GiftIcon;
-    case 'cart':
-      return CartIcon;
-    case 'dumbbell':
-      return DumbbellIcon;
-    default:
-      return GamepadIcon;
-  }
-};

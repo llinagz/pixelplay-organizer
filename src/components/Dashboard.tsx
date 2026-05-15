@@ -1,36 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, Reorder } from "framer-motion";
 import { PixelButton } from "@/components/PixelButton";
-import { PlusIcon, getIconByType } from "@/components/PixelIcons";
-import { useApp } from "@/context/AppContext";
+import { PlusIcon } from "@/components/PixelIcons";
 import { AddItemModal } from "@/components/dashboard/AddItemModal";
 import { AddTagModal } from "@/components/dashboard/AddTagModal";
 import { ItemCard } from "@/components/dashboard/ItemCard";
 import { useI18n } from "@/i18n/I18nContext";
+import { useAuthActionsState, useAuthState, useBacklogActions, useBacklogState, useSyncActionsState, useSyncState } from "@/state";
+import { getIconByType } from "@/components/iconMap";
 
 export const Dashboard = () => {
   const { t } = useI18n();
-  const {
-    tags,
-    items,
-    nombreUsuario,
-    updateItem,
-    removeItem,
-    removeTag,
-    logOut,
-    reorderTags,
-    syncStatus,
-    lastSyncAt,
-    syncError,
-    linkedDevices,
-    isLinked,
-    lastConflict,
-    retrySync,
-    startDeviceLink,
-    completeDeviceLink,
-    exportData,
-    importData,
-  } = useApp();
+  const { tags, items } = useBacklogState();
+  const { updateItem, removeItem, removeTag, reorderTags } = useBacklogActions();
+  const { nombreUsuario } = useAuthState();
+  const { logOut } = useAuthActionsState();
+  const { syncStatus, lastSyncAt, syncError, linkedDevices, isLinked, lastConflict } = useSyncState();
+  const { retrySync, startDeviceLink, completeDeviceLink, exportData, importData } = useSyncActionsState();
 
   const [activeTagId, setActiveTagId] = useState<string | null>(tags[0]?.id || null);
   const [isModalOpen, setIsModalOpen] = useState(false);

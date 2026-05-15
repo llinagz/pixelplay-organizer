@@ -2,7 +2,8 @@ import { motion } from "framer-motion";
 import { PixelButton } from "@/components/PixelButton";
 import { PixelCard } from "@/components/PixelCard";
 import { PixelInput } from "@/components/PixelInput";
-import { ESTADO_COLORS, ESTADO_LABELS, type OcioEstado, useApp } from "@/context/AppContext";
+import { ESTADO_COLORS, ESTADO_LABELS, type OcioEstado } from "@/schema";
+import { useBacklogActions } from "@/state";
 import { useState } from "react";
 
 interface AddItemModalProps {
@@ -12,7 +13,7 @@ interface AddItemModalProps {
 }
 
 export const AddItemModal = ({ isOpen, onClose, tagId }: AddItemModalProps) => {
-  const { addItem } = useApp();
+  const { addItem } = useBacklogActions();
   const [titulo, setTitulo] = useState("");
   const [estado, setEstado] = useState<OcioEstado>("pendiente");
 

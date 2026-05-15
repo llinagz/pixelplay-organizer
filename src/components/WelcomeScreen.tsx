@@ -3,13 +3,14 @@ import { motion } from "framer-motion";
 import { PixelButton } from "@/components/PixelButton";
 import { PixelInput } from "@/components/PixelInput";
 import { PixelCard } from "@/components/PixelCard";
-import { useApp } from "@/context/AppContext";
+import { useAuthActionsState, useAuthState } from "@/state";
 import { useI18n } from "@/i18n/I18nContext";
 
 export const WelcomeScreen = () => {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { signUp, logIn, existingUsers } = useApp();
+  const { signUp, logIn } = useAuthActionsState();
+  const { existingUsers } = useAuthState();
   const { t } = useI18n();
 
   const handleSubmit = async (e: React.FormEvent) => {

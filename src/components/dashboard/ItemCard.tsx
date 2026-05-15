@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { TrashIcon } from "@/components/PixelIcons";
-import { ESTADO_COLORS, ESTADO_LABELS, type OcioEstado, type OcioItemUI } from "@/context/AppContext";
+import { ESTADO_COLORS, ESTADO_LABELS, type OcioEstado } from "@/schema";
+import type { OcioItemUI } from "@/context/types";
 import { colorPorPuntuacion } from "@/domain/rating";
 import { RatingModal } from "./RatingModal";
 
