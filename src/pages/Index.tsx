@@ -1,8 +1,10 @@
 import { AppProvider, useApp } from '@/context/AppContext';
-import { WelcomeScreen } from '@/components/WelcomeScreen';
-import { TagsConfigScreen } from '@/components/TagsConfigScreen';
-import { Dashboard } from '@/components/Dashboard';
+import { lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+
+const WelcomeScreen = lazy(() => import('@/components/WelcomeScreen').then((m) => ({ default: m.WelcomeScreen })));
+const TagsConfigScreen = lazy(() => import('@/components/TagsConfigScreen').then((m) => ({ default: m.TagsConfigScreen })));
+const Dashboard = lazy(() => import('@/components/Dashboard').then((m) => ({ default: m.Dashboard })));
 
 const AppContent = () => {
   const { authState, onboardingCompletado } = useApp();
@@ -48,17 +50,19 @@ const AppContent = () => {
         />
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={screenKey}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3 }}
-        >
-          {getScreen()}
-        </motion.div>
-      </AnimatePresence>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-pixel-base">Cargando...</div>}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={screenKey}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {getScreen()}
+          </motion.div>
+        </AnimatePresence>
+      </Suspense>
     </div>
   );
 };

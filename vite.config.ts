@@ -76,4 +76,16 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          jazz: ["jazz-tools", "jazz-tools/react"],
+          motion: ["framer-motion"],
+          radix: ["@radix-ui/react-dialog", "@radix-ui/react-popover", "@radix-ui/react-tooltip"],
+        },
+      },
+    },
+  },
 }));
