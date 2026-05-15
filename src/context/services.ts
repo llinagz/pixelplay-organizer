@@ -3,6 +3,16 @@ import { OcioItem, Tag, type OcioEstado, type TagIcon } from "@/schema";
 import { esValoracionValida } from "@/schema";
 import { ocioTipoFromTagIcon } from "@/domain/ocio";
 import { clearAppStorage } from "@/domain/session";
+import {
+  conflictBackupKey,
+  createConflictEvent,
+  decodeLinkCode,
+  encodeLinkCode,
+  parseExportPayload,
+  type ConflictResolutionEvent,
+  type ExportPayload,
+  type ImportResult,
+} from "@/domain/sync";
 
 const coId = (coValue: { $jazz: { readonly id: string } }): string => coValue.$jazz.id;
 const toArray = <T,>(list: ArrayLike<T>): T[] => Array.from(list);
@@ -89,6 +99,7 @@ export const useItemActions = (root: any) => {
     (
       id: string,
       updates: Partial<{ estado: OcioEstado; valoracion: number; notas: string }>,
+      onConflict?: (event: ConflictResolutionEvent) => void,
     ) => {
       if (!root?.items) return;
       const itemArr = toArray(root.items);
@@ -98,6 +109,19 @@ export const useItemActions = (root: any) => {
       const diff: typeof updates = { ...updates };
       if (diff.valoracion !== undefined && !esValoracionValida(diff.valoracion)) {
         delete diff.valoracion;
+      }
+      if (
+        diff.notas !== undefined &&
+        item.notas !== undefined &&
+        diff.notas.trim() !== item.notas.trim()
+      ) {
+        const event = createConflictEvent({
+          itemId: id,
+          localValue: item.notas,
+          remoteValue: diff.notas,
+        });
+        localStorage.setItem(conflictBackupKey(id), item.notas);
+        onConflict?.(event);
       }
 
       item.$jazz.applyDiff(diff);
@@ -116,6 +140,115 @@ export const useItemActions = (root: any) => {
   );
 
   return { addItem, updateItem, removeItem };
+};
+
+const getPayloadFromRoot = (root: any): ExportPayload => {
+  const tags = root?.tags ? toArray(root.tags).filter(Boolean) : [];
+  const items = root?.items ? toArray(root.items).filter(Boolean) : [];
+
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    onboardingCompletado: Boolean(root?.onboardingCompletado),
+    tags: tags.map((tag: any) => ({
+      nombre: tag.nombre,
+      icono: tag.icono,
+      color: tag.color,
+    })),
+    items: items.map((item: any) => ({
+      titulo: item.titulo,
+      tipo: item.tipo,
+      estado: item.estado,
+      tagNombre: item.tag?.nombre ?? "",
+      valoracion: item.valoracion ?? undefined,
+      notas: item.notas ?? undefined,
+      imagenUrl: item.imagenUrl ?? undefined,
+    })),
+  };
+};
+
+export const useSyncActions = (root: any) => {
+  const exportData = useCallback((): string => {
+    const payload = getPayloadFromRoot(root);
+    return JSON.stringify(payload);
+  }, [root]);
+
+  const importData = useCallback(
+    (payloadRaw: string): ImportResult => {
+      if (!root?.tags || !root?.items) {
+        return { ok: false, errorCode: "unknown", message: "Cuenta no disponible" };
+      }
+
+      try {
+        const parsed = JSON.parse(payloadRaw);
+        const validation = parseExportPayload(parsed);
+        if (!validation.success) {
+          return {
+            ok: false,
+            errorCode: "invalid_schema",
+            message: "El formato del backup no es valido",
+          };
+        }
+
+        const payload = validation.data;
+        while (root.items.length > 0) root.items.$jazz.splice(0, 1);
+        while (root.tags.length > 0) root.tags.$jazz.splice(0, 1);
+
+        const tagsByName = new Map<string, any>();
+        for (const tag of payload.tags) {
+          const created = Tag.create(tag);
+          root.tags.$jazz.push(created);
+          tagsByName.set(tag.nombre, created);
+        }
+
+        for (const item of payload.items) {
+          const tag = tagsByName.get(item.tagNombre);
+          if (!tag) continue;
+          root.items.$jazz.push(
+            OcioItem.create({
+              titulo: item.titulo,
+              tipo: item.tipo,
+              estado: item.estado,
+              tag,
+              valoracion: item.valoracion,
+              notas: item.notas,
+              imagenUrl: item.imagenUrl,
+            }),
+          );
+        }
+
+        root.$jazz.applyDiff({ onboardingCompletado: payload.onboardingCompletado });
+        return {
+          ok: true,
+          importedTags: payload.tags.length,
+          importedItems: payload.items.length,
+        };
+      } catch {
+        return {
+          ok: false,
+          errorCode: "invalid_json",
+          message: "No se pudo importar el contenido",
+        };
+      }
+    },
+    [root],
+  );
+
+  const startDeviceLink = useCallback((): string => {
+    const payload = getPayloadFromRoot(root);
+    return encodeLinkCode(payload);
+  }, [root]);
+
+  const completeDeviceLink = useCallback(
+    (code: string): ImportResult => {
+      const decoded = decodeLinkCode(code);
+      if (!decoded.ok || !decoded.payload) return decoded;
+      return importData(JSON.stringify(decoded.payload));
+    },
+    [importData],
+  );
+
+  return { exportData, importData, startDeviceLink, completeDeviceLink };
 };
 
 export const useAuthActions = () => {

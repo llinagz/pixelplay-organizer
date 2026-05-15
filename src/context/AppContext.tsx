@@ -4,7 +4,7 @@
  * Mantiene la API pública useApp, pero delega lógica de negocio
  * a servicios internos para mejorar mantenibilidad y testabilidad.
  */
-import { createContext, ReactNode, useContext, useMemo } from "react";
+import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
 import { useAccount, useDemoAuth, useIsAuthenticated } from "jazz-tools/react";
 import {
   BacklogPixelAccount,
@@ -14,8 +14,9 @@ import {
   OcioEstado,
   TagIcon,
 } from "@/schema";
-import { useAuthActions, useItemActions, useOnboardingActions, useTagActions, coId, toArray } from "./services";
-import type { AuthState, OcioItemUI, TagUI } from "./types";
+import { useAuthActions, useItemActions, useOnboardingActions, useSyncActions, useTagActions, coId, toArray } from "./services";
+import type { AuthState, OcioItemUI, SyncActions, SyncSnapshot, TagUI } from "./types";
+import type { ConflictResolutionEvent, ImportResult, SyncStatus } from "@/domain/sync";
 
 interface AppContextType {
   authState: AuthState;
@@ -37,6 +38,17 @@ interface AppContextType {
   ) => void;
   removeItem: (id: string) => void;
   logOut: () => void;
+  syncStatus: SyncStatus;
+  lastSyncAt?: string;
+  syncError?: string;
+  linkedDevices: number | null;
+  isLinked: boolean;
+  lastConflict?: ConflictResolutionEvent;
+  startDeviceLink: SyncActions["startDeviceLink"];
+  completeDeviceLink: SyncActions["completeDeviceLink"];
+  retrySync: SyncActions["retrySync"];
+  exportData: SyncActions["exportData"];
+  importData: SyncActions["importData"];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -89,7 +101,102 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const { completeOnboarding } = useOnboardingActions(root);
   const { addTag, removeTag, reorderTags } = useTagActions(root);
   const { addItem, updateItem, removeItem } = useItemActions(root);
+  const { startDeviceLink, completeDeviceLink, exportData, importData } = useSyncActions(root);
   const { logOut } = useAuthActions();
+  const [syncSnapshot, setSyncSnapshot] = useState<SyncSnapshot>({
+    syncStatus: navigator.onLine ? "up_to_date" : "offline",
+    lastSyncAt: undefined,
+    syncError: undefined,
+    linkedDevices: null,
+    isLinked: false,
+    lastConflict: undefined,
+  });
+
+  useEffect(() => {
+    const onOnline = () => {
+      setSyncSnapshot((prev) => ({
+        ...prev,
+        syncStatus: "up_to_date",
+        lastSyncAt: new Date().toISOString(),
+        syncError: undefined,
+      }));
+    };
+    const onOffline = () => {
+      setSyncSnapshot((prev) => ({
+        ...prev,
+        syncStatus: "offline",
+      }));
+    };
+
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
+  }, []);
+
+  const retrySync = async () => {
+    setSyncSnapshot((prev) => ({ ...prev, syncStatus: "syncing", syncError: undefined }));
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    if (!navigator.onLine) {
+      setSyncSnapshot((prev) => ({
+        ...prev,
+        syncStatus: "error",
+        syncError: "Sin conexion a internet",
+      }));
+      return;
+    }
+    setSyncSnapshot((prev) => ({
+      ...prev,
+      syncStatus: "up_to_date",
+      lastSyncAt: new Date().toISOString(),
+      syncError: undefined,
+    }));
+  };
+
+  const wrappedCompleteDeviceLink = (code: string): ImportResult => {
+    const result = completeDeviceLink(code);
+    setSyncSnapshot((prev) => ({
+      ...prev,
+      isLinked: result.ok || prev.isLinked,
+      linkedDevices: result.ok ? 2 : prev.linkedDevices,
+      syncStatus: result.ok ? "up_to_date" : "error",
+      syncError: result.ok ? undefined : result.message,
+      lastSyncAt: result.ok ? new Date().toISOString() : prev.lastSyncAt,
+    }));
+    return result;
+  };
+
+  const wrappedStartDeviceLink = (): string => {
+    const code = startDeviceLink();
+    setSyncSnapshot((prev) => ({
+      ...prev,
+      isLinked: true,
+      linkedDevices: Math.max(prev.linkedDevices ?? 1, 1),
+    }));
+    return code;
+  };
+
+  const wrappedImportData = (payload: string): ImportResult => {
+    const result = importData(payload);
+    setSyncSnapshot((prev) => ({
+      ...prev,
+      syncStatus: result.ok ? "up_to_date" : "error",
+      syncError: result.ok ? undefined : result.message,
+      lastSyncAt: result.ok ? new Date().toISOString() : prev.lastSyncAt,
+    }));
+    return result;
+  };
+
+  const wrappedUpdateItem = (
+    id: string,
+    updates: Partial<{ estado: OcioEstado; valoracion: number; notas: string }>,
+  ) => {
+    updateItem(id, updates, (event) => {
+      setSyncSnapshot((prev) => ({ ...prev, lastConflict: event }));
+    });
+  };
 
   const value = useMemo<AppContextType>(
     () => ({
@@ -106,9 +213,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       removeTag,
       reorderTags,
       addItem,
-      updateItem,
+      updateItem: wrappedUpdateItem,
       removeItem,
       logOut,
+      syncStatus: syncSnapshot.syncStatus,
+      lastSyncAt: syncSnapshot.lastSyncAt,
+      syncError: syncSnapshot.syncError,
+      linkedDevices: syncSnapshot.linkedDevices,
+      isLinked: syncSnapshot.isLinked,
+      lastConflict: syncSnapshot.lastConflict,
+      startDeviceLink: wrappedStartDeviceLink,
+      completeDeviceLink: wrappedCompleteDeviceLink,
+      retrySync,
+      exportData,
+      importData: wrappedImportData,
     }),
     [
       demoAuth,
@@ -121,9 +239,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       removeTag,
       reorderTags,
       addItem,
-      updateItem,
+      wrappedUpdateItem,
       removeItem,
       logOut,
+      syncSnapshot,
+      wrappedStartDeviceLink,
+      wrappedCompleteDeviceLink,
+      retrySync,
+      exportData,
+      wrappedImportData,
     ],
   );
 
