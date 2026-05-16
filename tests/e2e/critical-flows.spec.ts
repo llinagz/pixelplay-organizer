@@ -33,6 +33,24 @@ test("dashboard: permite eliminar categorias", async ({ page }) => {
   await expect(page.getByText("Temporal")).not.toBeVisible();
 });
 
+test("dashboard: permite editar nombre, icono y color de categorias", async ({ page }) => {
+  await completarOnboarding(page, "Edit User", "Temporal");
+
+  await page.getByRole("button", { name: /Editar categoria Temporal/i }).click();
+  await page.getByPlaceholder(/Nombre|Name|Nome/i).fill("Renombrada");
+
+  const modal = page.locator(".fixed.inset-0.z-50").last();
+  await modal.locator("button").filter({ has: page.locator("svg") }).nth(1).click();
+  await modal.locator("button[style*='rgb(59, 130, 246)'], button[style*='#3b82f6']").first().click();
+  await modal.getByRole("button", { name: /Guardar|Save|Gardar/i }).click();
+
+  await expect(page.locator("span.text-pixel-sm.text-foreground", { hasText: "Renombrada" }).first()).toBeVisible();
+  await expect(page.locator("h2.text-pixel-lg.text-foreground")).toHaveText("Renombrada");
+
+  await page.getByRole("button", { name: /Eliminar categoria Renombrada/i }).click();
+  await expect(page.getByText("Renombrada")).not.toBeVisible();
+});
+
 test("flujo sync: generar codigo, exportar e importar", async ({ page }) => {
   await completarOnboarding(page, "Sync User", "Sync Cat");
 

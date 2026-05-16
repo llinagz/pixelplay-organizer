@@ -53,6 +53,7 @@ export interface BacklogSlice {
   tags: TagUI[];
   items: OcioItemUI[];
   addTag: (tag: { nombre: string; icono: TagIcon; color: string }) => void;
+  updateTag: (id: string, updates: Partial<{ nombre: string; icono: TagIcon; color: string }>) => void;
   removeTag: (id: string) => void;
   reorderTags: (newOrderIds: string[]) => void;
   addItem: (item: { titulo: string; tagId: string; estado: OcioEstado }) => void;

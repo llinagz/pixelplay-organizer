@@ -38,7 +38,7 @@ export const BacklogProvider = ({ children }: { children: ReactNode }) => {
       }));
   }, [root?.items]);
 
-  const { addTag, removeTag, reorderTags } = useTagActions(root);
+  const { addTag, updateTag, removeTag, reorderTags } = useTagActions(root);
   const { addItem, updateItem, removeItem } = useItemActions(root);
 
   const value = useMemo<BacklogSlice>(
@@ -46,6 +46,7 @@ export const BacklogProvider = ({ children }: { children: ReactNode }) => {
       tags,
       items,
       addTag,
+      updateTag,
       removeTag,
       reorderTags,
       addItem,
@@ -54,7 +55,7 @@ export const BacklogProvider = ({ children }: { children: ReactNode }) => {
       },
       removeItem,
     }),
-    [tags, items, addTag, removeTag, reorderTags, addItem, updateItem, removeItem],
+    [tags, items, addTag, updateTag, removeTag, reorderTags, addItem, updateItem, removeItem],
   );
 
   return <BacklogContext.Provider value={value}>{children}</BacklogContext.Provider>;
@@ -66,8 +67,8 @@ export const useBacklogState = () => {
 };
 
 export const useBacklogActions = () => {
-  const { addTag, removeTag, reorderTags, addItem, updateItem, removeItem } = useBacklogSlice();
-  return { addTag, removeTag, reorderTags, addItem, updateItem, removeItem };
+  const { addTag, updateTag, removeTag, reorderTags, addItem, updateItem, removeItem } = useBacklogSlice();
+  return { addTag, updateTag, removeTag, reorderTags, addItem, updateItem, removeItem };
 };
 
 export const useTags = () => useBacklogSlice().tags;

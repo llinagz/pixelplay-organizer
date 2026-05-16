@@ -8,6 +8,7 @@ import { ItemCard } from "@/components/dashboard/ItemCard";
 import { useI18n } from "@/i18n/I18nContext";
 import { useAuthActionsState, useAuthState, useBacklogActions, useBacklogState, useSyncActionsState, useSyncState } from "@/state";
 import { getIconByType } from "@/components/iconMap";
+import type { TagUI } from "@/context/types";
 
 export const Dashboard = () => {
   const { t } = useI18n();
@@ -21,6 +22,7 @@ export const Dashboard = () => {
   const [activeTagId, setActiveTagId] = useState<string | null>(tags[0]?.id || null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [editingTag, setEditingTag] = useState<TagUI | null>(null);
   const [isSyncPanelOpen, setIsSyncPanelOpen] = useState(false);
   const [pairCode, setPairCode] = useState("");
   const [importValue, setImportValue] = useState("");
@@ -146,6 +148,17 @@ export const Dashboard = () => {
                       <span className="text-pixel-xs text-muted-foreground px-2 py-1 bg-muted">{itemCount}</span>
                       <button
                         type="button"
+                        className="text-pixel-xs text-primary px-2 py-1 border-2 border-primary/70 hover:bg-primary/15"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setEditingTag(tag);
+                        }}
+                        aria-label={`${t("editCategory")} ${tag.nombre}`}
+                      >
+                        {t("edit")}
+                      </button>
+                      <button
+                        type="button"
                         className="text-pixel-xs text-destructive px-2 py-1 border-2 border-destructive/70 hover:bg-destructive/15"
                         onClick={(event) => {
                           event.stopPropagation();
@@ -240,6 +253,16 @@ export const Dashboard = () => {
       </AnimatePresence>
       <AnimatePresence>
         {isTagModalOpen ? <AddTagModal isOpen={isTagModalOpen} onClose={() => setIsTagModalOpen(false)} /> : null}
+      </AnimatePresence>
+      <AnimatePresence>
+        {editingTag ? (
+          <AddTagModal
+            isOpen={editingTag != null}
+            mode="edit"
+            initialTag={editingTag}
+            onClose={() => setEditingTag(null)}
+          />
+        ) : null}
       </AnimatePresence>
     </div>
   );
