@@ -20,8 +20,10 @@ import {
   UtensilsIcon,
 } from "@/components/PixelIcons";
 import type { FC } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useBacklogActions } from "@/state";
+import { useI18n } from "@/i18n/I18nContext";
+import type { TagUI } from "@/context/types";
 
 const ICON_OPTIONS: { type: TagIcon; component: FC<{ className?: string }> }[] = [
   { type: "gamepad", component: GamepadIcon },
@@ -45,13 +47,31 @@ const COLOR_OPTIONS = ["#22c55e", "#3b82f6", "#a855f7", "#f59e0b", "#ef4444", "#
 interface AddTagModalProps {
   isOpen: boolean;
   onClose: () => void;
+  mode?: "create" | "edit";
+  initialTag?: TagUI;
 }
 
-export const AddTagModal = ({ isOpen, onClose }: AddTagModalProps) => {
-  const { addTag } = useBacklogActions();
+export const AddTagModal = ({ isOpen, onClose, mode = "create", initialTag }: AddTagModalProps) => {
+  const { t } = useI18n();
+  const { addTag, updateTag } = useBacklogActions();
   const [nombre, setNombre] = useState("");
   const [selectedIcon, setSelectedIcon] = useState<TagIcon>("gamepad");
   const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
+
+  const isEditMode = mode === "edit" && initialTag != null;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (isEditMode && initialTag) {
+      setNombre(initialTag.nombre);
+      setSelectedIcon(initialTag.icono);
+      setSelectedColor(initialTag.color);
+      return;
+    }
+    setNombre("");
+    setSelectedIcon("gamepad");
+    setSelectedColor(COLOR_OPTIONS[0]);
+  }, [isOpen, isEditMode, initialTag]);
 
   if (!isOpen) return null;
 
@@ -70,22 +90,31 @@ export const AddTagModal = ({ isOpen, onClose }: AddTagModalProps) => {
         onClick={(e) => e.stopPropagation()}
       >
         <PixelCard variant="panel" className="w-full max-w-sm">
-          <h3 className="text-pixel-lg text-primary mb-4">Nueva Categoría</h3>
+          <h3 className="text-pixel-lg text-primary mb-4">{isEditMode ? t("editCategory") : t("newCategory")}</h3>
           <form
             className="space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
               if (!nombre.trim()) return;
+
+              if (isEditMode && initialTag) {
+                updateTag(initialTag.id, { nombre: nombre.trim(), icono: selectedIcon, color: selectedColor });
+                onClose();
+                return;
+              }
+
               addTag({ nombre: nombre.trim(), icono: selectedIcon, color: selectedColor });
-              setNombre("");
-              setSelectedIcon("gamepad");
-              setSelectedColor(COLOR_OPTIONS[0]);
               onClose();
             }}
           >
-            <PixelInput value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre..." autoFocus />
+            <PixelInput
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              placeholder={t("categoryNamePlaceholder")}
+              autoFocus
+            />
             <div>
-              <p className="text-pixel-sm text-muted-foreground mb-2 uppercase">Icono</p>
+              <p className="text-pixel-sm text-muted-foreground mb-2 uppercase">{t("icon")}</p>
               <div className="flex flex-wrap gap-2">
                 {ICON_OPTIONS.map(({ type, component: Icon }) => (
                   <button
@@ -101,7 +130,7 @@ export const AddTagModal = ({ isOpen, onClose }: AddTagModalProps) => {
               </div>
             </div>
             <div>
-              <p className="text-pixel-sm text-muted-foreground mb-2 uppercase">Color</p>
+              <p className="text-pixel-sm text-muted-foreground mb-2 uppercase">{t("color")}</p>
               <div className="flex flex-wrap gap-2">
                 {COLOR_OPTIONS.map((color) => (
                   <button
@@ -116,10 +145,10 @@ export const AddTagModal = ({ isOpen, onClose }: AddTagModalProps) => {
             </div>
             <div className="flex gap-2">
               <PixelButton type="submit" disabled={!nombre.trim()}>
-                Crear
+                {isEditMode ? t("save") : t("create")}
               </PixelButton>
               <PixelButton type="button" variant="secondary" onClick={onClose}>
-                Cancelar
+                {t("cancel")}
               </PixelButton>
             </div>
           </form>
@@ -128,4 +157,3 @@ export const AddTagModal = ({ isOpen, onClose }: AddTagModalProps) => {
     </motion.div>
   );
 };
-

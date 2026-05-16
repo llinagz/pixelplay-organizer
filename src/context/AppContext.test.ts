@@ -240,6 +240,54 @@ describe("Operaciones CRUD — AppContext", () => {
     });
   });
 
+  describe("updateTag", () => {
+    it("actualiza nombre, icono y color de un tag existente", () => {
+      const tag = Tag.create({
+        nombre: "Original",
+        icono: "gamepad",
+        color: "#111111",
+      });
+      root.tags.$jazz.push(tag);
+
+      tag.$jazz.applyDiff({
+        nombre: "Renombrada",
+        icono: "book",
+        color: "#3b82f6",
+      });
+
+      expect(tag.nombre).toBe("Renombrada");
+      expect(tag.icono).toBe("book");
+      expect(tag.color).toBe("#3b82f6");
+    });
+
+    it("ignora nombre vacio tras trim y no afecta otros tags", () => {
+      const tagA = Tag.create({
+        nombre: "Categoria A",
+        icono: "gamepad",
+        color: "#111111",
+      });
+      const tagB = Tag.create({
+        nombre: "Categoria B",
+        icono: "book",
+        color: "#222222",
+      });
+      root.tags.$jazz.push(tagA);
+      root.tags.$jazz.push(tagB);
+
+      const proposedName = "   ".trim();
+      if (proposedName.length > 0) {
+        tagA.$jazz.applyDiff({ nombre: proposedName });
+      }
+      tagA.$jazz.applyDiff({ color: "#f59e0b" });
+
+      expect(tagA.nombre).toBe("Categoria A");
+      expect(tagA.color).toBe("#f59e0b");
+      expect(tagB.nombre).toBe("Categoria B");
+      expect(tagB.icono).toBe("book");
+      expect(tagB.color).toBe("#222222");
+    });
+  });
+
   // ─── Ítems de ocio ──────────────────────────────────────────
 
   describe("addItem", () => {

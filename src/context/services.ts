@@ -56,6 +56,34 @@ export const useTagActions = (root: BacklogPixelRoot | undefined) => {
     [root],
   );
 
+  const updateTag = useCallback(
+    (id: string, updates: Partial<{ nombre: Tag["nombre"]; icono: Tag["icono"]; color: string }>) => {
+      if (!root?.tags) return;
+      const tagArr = toArray(root.tags);
+      const tag = tagArr.find((t) => t != null && coId(t) === id);
+      if (!tag) return;
+
+      const diff: Partial<{ nombre: Tag["nombre"]; icono: Tag["icono"]; color: string }> = {};
+
+      if (typeof updates.nombre === "string") {
+        const trimmedName = updates.nombre.trim();
+        if (trimmedName.length > 0) {
+          diff.nombre = trimmedName;
+        }
+      }
+      if (updates.icono !== undefined) {
+        diff.icono = updates.icono;
+      }
+      if (updates.color !== undefined) {
+        diff.color = updates.color;
+      }
+
+      if (Object.keys(diff).length === 0) return;
+      tag.$jazz.applyDiff(diff);
+    },
+    [root],
+  );
+
   const reorderTags = useCallback(
     (newOrderIds: string[]) => {
       if (!root?.tags) return;
@@ -74,7 +102,7 @@ export const useTagActions = (root: BacklogPixelRoot | undefined) => {
     [root],
   );
 
-  return { addTag, removeTag, reorderTags };
+  return { addTag, updateTag, removeTag, reorderTags };
 };
 
 export const useItemActions = (root: BacklogPixelRoot | undefined) => {
